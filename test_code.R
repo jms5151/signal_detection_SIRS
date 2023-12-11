@@ -1,3 +1,7 @@
+x <- read.csv('./data/output_lamb_T15_R11.csv')
+quantile(x$beta0)
+beta0 <- median(x$beta0)
+
 # Step 1: SIR Model with Time-Varying Beta Parameter
 
 library(deSolve)
@@ -150,3 +154,125 @@ simulate_stochastic_heat_wave <- function(normal_temperature, heat_wave_duration
 
 x <- simulate_stochastic_heat_wave(normal_temperature, 6, 5, 2)
 plot.ts(x)
+
+## power ---------------
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(ggpubr)
+library(treemapify)
+library(RColorBrewer)
+
+dengue <- read.csv('data/dengue_R0_historical.csv')
+
+dengue <- subset(dengue, R0 < 30) # remove extreme outlier
+
+# climzone <- 'Temperate'
+meanR0 <- round(mean(dengue$R0))
+sdR0 <- sd(dengue$R0)
+maxR0 <- round(max(dengue$R0))
+
+r0_normal_95 <- function(N, gamma, beta, sd){
+  (N / gamma) * beta + 1.645 * ((N * sd) / gamma)
+}
+
+percentExtreme <- function(N, gamma, r0_normal, beta_extreme, sd_extreme){
+  pnorm(r0_normal
+        , mean = (N / gamma) * beta_extreme
+        , sd = (N / gamma) * sd_extreme
+        , lower.tail = TRUE
+        , log.p = FALSE)
+}
+
+N = 10000
+N = 1 # cholera
+gamma = 1/15 # dengue
+
+gamma = 1/4 # cholera
+meanR0 <- 2.15 # cholera
+maxR0 <- 18 # cholera
+mu = 0
+beta_normal = (meanR0 / N) * (gamma + mu)
+
+varyBetaMultiplier = seq(1, 4, by = 0.1)
+vary_SD = beta_normal * varyBetaMultiplier
+vary_R0_extreme = seq(meanR0, maxR0, 0.5) # Say that extreme weather events can at most double the R0
+
+res = c()
+for (R0_extreme_input in vary_R0_extreme) {
+  for (sd_input in vary_SD) {
+    R0_normal = meanR0
+    R0_extreme = R0_extreme_input
+    beta_normal = (R0_normal / N) * (gamma + mu)
+    beta_extreme = (R0_extreme / N) * (gamma + mu)
+    sd.error.normal = sd_input #beta_normal
+    sd.error.extreme = sd_input
+    ninetyfivepct.R0_normal = (N / (gamma + mu)) * beta_normal + 1.645 * ((N * sd.error.normal) / (gamma + mu))
+    pct.extreme.dist.under.ninetyfivepct.R0_normal <- pnorm(ninetyfivepct.R0_normal, mean = (N / (gamma + mu)) * beta_extreme, sd = (N / (gamma + mu)) * sd.error.extreme, lower.tail = TRUE, log.p = FALSE)
+    power = 1 - pct.extreme.dist.under.ninetyfivepct.R0_normal
+    res = c(res, power)
+  }
+}
+finalMat = matrix(res, ncol=length(vary_SD), nrow=length(vary_R0_extreme), byrow=T)
+rownames(finalMat) <- vary_R0_extreme
+colnames(finalMat) <- round((as.numeric(vary_SD) / beta_normal), 2)
+finalMat = data.frame(finalMat, check.names = F)
+finalMat$id = vary_R0_extreme #seq(1, length(vary_R0_extreme), by=1)
+melted <- melt(finalMat, id.var='id')
+colnames(melted) <- c('vary_R0_extreme', 'vary_SD', 'value')
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_fill_gradientn(colours = myPalette(100))
+temp_plot <- ggplot(melted, aes(y = vary_R0_extreme, x = vary_SD, fill = value)) + geom_tile() +
+  sc+  labs(fill="Power") +
+  ylab('R0, extreme') + xlab('Beta variability (assuming same for normal and extreme)') + ggtitle('') +
+  theme_classic() +
+  ggtitle('WBD')
+temp_plot
+
+
+
+
+x1 <- read.csv('./data/output_lamb_T15_R11.csv')
+beta0 <- median(x1$beta0)
+
+x <- read.csv('data/climate.csv') # typically peak in September
+
+  
+city <- 'Sao Paulo, Brazil'
+# city <- 'Dhaka City, Bangladesh'
+cityMean  <- mean(x$meanT[x$City == city])
+cityAmp <- (max(x$maxT[x$City == city]) - min(x$minT[x$City == city]))/2
+# what we really want here is day to day variability
+cityNoise <- sd(x$meanT[x$City == city])
+
+betaNormal <- Lambrechts_beta(b0 = beta0, temperature = cityMean)
+cityTempRange <- seq(cityRange[1], cityRange[2], by = 0.1)
+betaNormalRange <- sapply(cityTempRange, Lambrechts_beta, b0 = beta0)
+betaNormalSD <- sd(betaNormalRange)
+
+n = 10000
+mu = 1/71
+gamma = 1/15
+
+Dhaka_base_r0 <- r0_normal_95(N = n, mu = mu, gamma = gamma, beta = betaNormal, sd = 0.01)
+
+MaxExtreme <- round(max(x$recordHighT[x$City == city])) #x$recordHighT[x$month == 8]
+extremeTemps <- seq(round(cityMean) + 1, MaxExtreme, by = 1)
+
+res <- c()
+de <- c()
+for(i in 1:length(extremeTemps)){
+  Dhaka_extreme <- Lambrechts_beta(b0 = beta0, temperature = extremeTemps[i])
+  de <- c(de, Dhaka_extreme)
+  extremeR0prob <- percentExtreme(N = n
+          , mu = mu
+          , gamma = gamma
+          , r0_normal = Dhaka_base_r0
+          , beta_extreme = Dhaka_extreme
+          , sd_extreme = betaNormalSD)
+  power <- 1 - extremeR0prob
+  res <- c(res, power)
+}
+res
+
+plot(extremeTemps, res, pch = 16)

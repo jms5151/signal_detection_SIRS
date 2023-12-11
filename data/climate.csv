@@ -1,0 +1,25 @@
+City,month,minT,meanT,maxT,recordHighT,MeanPrecipDays,MeanPrecip
+"Dhaka City, Bangladesh",1,12.7,19.1,25.4,31.1,2,7.7
+"Dhaka City, Bangladesh",2,15.5,21.8,28.1,34.4,3,28.9
+"Dhaka City, Bangladesh",3,20.4,26.5,32.5,40.6,5,65.8
+"Dhaka City, Bangladesh",4,23.6,28.7,33.7,42.2,10,156.3
+"Dhaka City, Bangladesh",5,24.5,28.7,32.9,41.1,15,339.4
+"Dhaka City, Bangladesh",6,26.1,29.1,32.1,36.7,14,340.4
+"Dhaka City, Bangladesh",7,26.2,28.8,31.4,35,17,373.1
+"Dhaka City, Bangladesh",8,26.3,29,31.6,36.1,16,316.5
+"Dhaka City, Bangladesh",9,25.9,28.8,31.6,36.7,13,300.4
+"Dhaka City, Bangladesh",10,23.8,27.7,31.6,37.4,7,172.3
+"Dhaka City, Bangladesh",11,19.2,24.4,29.6,34.4,2,34.4
+"Dhaka City, Bangladesh",12,14.1,20.3,26.4,30.6,1,12.8
+"Sao Paulo, Brazil",1,19.4,23.1,28.6,37,17,292.1
+"Sao Paulo, Brazil",2,19.6,23.5,29,35.9,14,257.7
+"Sao Paulo, Brazil",3,18.9,22.5,28,34.3,13,229.1
+"Sao Paulo, Brazil",4,17.5,21.2,26.6,33.4,6,87
+"Sao Paulo, Brazil",5,14.7,18.4,23.4,31.7,6,66.3
+"Sao Paulo, Brazil",6,13.5,17.5,22.9,28.8,5,59.7
+"Sao Paulo, Brazil",7,12.8,17.2,22.9,30.2,4,48.4
+"Sao Paulo, Brazil",8,13.3,18.1,24.5,33,4,32.3
+"Sao Paulo, Brazil",9,14.9,19.1,25.2,35.7,7,83.3
+"Sao Paulo, Brazil",10,16.5,20.5,26.5,37.8,10,127.2
+"Sao Paulo, Brazil",11,17.3,21.2,26.9,37.7,11,143.9
+"Sao Paulo, Brazil",12,18.7,22.6,28.3,35.6,13,231.3

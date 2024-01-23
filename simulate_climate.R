@@ -1,110 +1,86 @@
 # extreme events simulations
 
 source('functions_to_simulate_climate.R')
-# may want the city name in the title too if we're doing multiple locations
-# T = temperature
-# sh = short term simulation
-# lg = long run simulation
 
-gen_T_sh_list <- function(years, iter, cityMean, cityAmp, cityNoise, magnitudes, durations, timing){
-  times = seq(1, 365*years, 1)
-  x1 <- lapply(1:iter, function(i) generate_climate(cityMean, cityAmp, cityNoise, t = times))
-  names(x1) <- paste0('iter', seq(1,iter), '_normal')
-  newlist <- x1
-  for(mag in magnitudes){
-    for(dur in durations){
-      for(tim in timing){
-        x2 <- lapply(x1, function(i) 
-          generate_extreme_event(x = i, magnitude_change = mag, duration = dur, timing = tim))
-        names(x2) <- paste0('iter', seq(1, iter), '_', mag, 'C_', dur, 'd_', tim)
-        newlist <- c(newlist, x2)
-      }
-    }
-  }
-  return(newlist)
-}
-
-# Conditions
-Magnitudes = seq(5, 25, 5)
-Durations = seq(3, 15, 2)
+# short term, extreme events
+# Global conditions
+load('data/historical_extremes.RData') # reference values from historical datasets
+t.Magnitudes = seq(1, 20, 1)
+t.Durations = seq(1, 15, 1)
+r.Magnitudes = seq(10, 200, 10)
+r.Durations = seq(1, 10, 1) 
 ExEV_times = c('pre', 'peak', 'post')
-Yrs = 1
-Iterations = 50
+Iterations = 2
 
-TS_BRAZIL <- gen_T_sh_list(
-  years = Yrs
+# extreme event occurs in second year of simulation
+t1 = 365
+t2 = 365 * 2
+
+# Local conditions calculated from weatherunderground data
+# from source('ancillary_climate_data.R')
+load('data/historical_temperature_values.RData')
+load('data/historical_rainfall_drc.RData')
+load('data/historical_rainfall_hi.RData')
+
+# Generate extreme event time series
+ee.vbd.bg <- ee_list(
+  climType = 'temperature'
+  , times = ee.times
   , iter = Iterations
-  , cityMean = 25
-  , cityAmp = 5
-  , cityNoise = 1.5
-  , magnitudes = Magnitudes
-  , durations = Durations
+  , var1 = historical.temperature.values$mean[historical.temperature.values$loc == 'bg']
+  , var2 = historical.temperature.values$amp[historical.temperature.values$loc == 'bg']
+  , var3 = historical.temperature.values$sd[historical.temperature.values$loc == 'bg']
+  , magnitudes = t.Magnitudes
+  , durations = t.Durations
   , timing = ExEV_times
+  , time1 = t1
+  , time2 = t2
 )
 
-
-# climate change simulations
-
-
-# climate variables
-CLIM_mean = 20.4 # Sao Paulo, Brazil
-CLIM_amp_small = 3.2 # Sao Paulo, Brazil
-CLIM_amp_large = 15
-CLIM_trend = 0.08 #average annual change globally since 1980
-dv = 1.5
-CLIM_mean_Dhaka <- 26.1
-CLIM_amp_Dhaka <- 7 # uneven, 7C below mean to 2.9C above mean
-
-clim_dhaka <- generate_climate(
-  climate_mean = CLIM_mean_Dhaka
-  , amplitude = CLIM_amp_Dhaka
-  , daily_var = dv
-  , t = times
+ee.vbd.br <- ee_list(
+  climType = 'temperature'
+  , times = ee.times
+  , iter = Iterations
+  , var1 = historical.temperature.values$mean[historical.temperature.values$loc == 'br']
+  , var2 = historical.temperature.values$amp[historical.temperature.values$loc == 'br']
+  , var3 = historical.temperature.values$sd[historical.temperature.values$loc == 'br']
+  , magnitudes = t.Magnitudes
+  , durations = t.Durations
+  , timing = ExEV_times
+  , time1 = t1
+  , time2 = t2
 )
 
-# generate climate with small amplitude
-clim_small <- generate_climate(
-  climate_mean = CLIM_mean
-  , amplitude = CLIM_amp_small
-  , daily_var = dv
-  , t = times
+ee.wbd.drc <- ee_list(
+  climType = 'rainfall'
+  , times = ee.times
+  , iter = Iterations
+  , var1 = round(monthly.R.var.drc$rainy_days)
+  , var2 = monthly.R.var.drc$total_rainfall
+  , var3 = NA
+  , magnitudes = r.Magnitudes
+  , durations = r.Durations
+  , timing = 'peak'
+  , time1 = t1
+  , time2 = t2
 )
 
-# generate climate with small amplitude & increasing trend
-clim_small_trend <- generate_climate_with_trend(
-  climate_mean = CLIM_mean
-  , amplitude = CLIM_amp_small
-  , t = times
-  , yearly_trend =  CLIM_trend 
+ee.wbd.hi <- ee_list(
+  climType = 'rainfall'
+  , times = ee.times
+  , iter = Iterations
+  , var1 = round(monthly.R.var.hi$rainy_days)
+  , var2 = monthly.R.var.hi$total_rainfall
+  , var3 = NA
+  , magnitudes = r.Magnitudes
+  , durations = r.Durations
+  , timing = 'peak'
+  , time1 = t1
+  , time2 = t2
 )
 
-# # plot
-plot.ts(clim_small_trend, col = 'maroon')
-# lines(clim_small)
-
-# generate climate with large amplitude
-clim_large <- generate_climate(
-  climate_mean = CLIM_mean
-  , daily_var = dv
-  , amplitude = CLIM_amp_large
-  , t = times
-)
-
-# generate climate with large amplitude & increasing trend
-clim_large_trend <- generate_climate_with_trend(
-  climate_mean = CLIM_mean
-  , amplitude = CLIM_amp_large
-  , t = times
-  , yearly_trend =  CLIM_trend
-)
-
-# # plot
-# plot.ts(clim_large_trend, col = 'maroon')
-# lines(clim_large)
-
-
-
-# extreme_climate <- extreme_event_generation(x = normal_climate, n = 1, magnitude_change = 4, duration = 3)
-# plot.ts(normal_climate, ylim = c(15, 35))
-# lines(extreme_climate, col = 'orange')
-# lines(normal_climate, col = 'lightgreen')
+# generate climate change time series
+# cc.vbd.br <- cc_list()
+# cc.vbd.bg <- cc_list()
+# cc.wbd.drc <- cc_list()
+# cc.wbd.hi <- cc_list()

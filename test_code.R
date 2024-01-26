@@ -129,3 +129,57 @@ x<- weather_history("Port-au-Prince",
                     hourly = "temperature_2m"
 )
 plot.ts(x$hourly_temperature_2m)
+
+
+
+detect_anomalies <- function(values, percentile = 90) {
+  # Calculate the percentile
+  threshold <- quantile(values, probs = percentile/100)
+
+  # Calculate the mean for the whole vector
+  mean_value <- mean(values)
+  
+  # Identify values exceeding the threshold
+  exceedances <- values > threshold
+  
+  # Create a vector to identify consecutive exceedances
+  consecutive_exceedances <- rle(exceedances)
+  
+  # Initialize data frame to store anomalies, intensity, duration, consecutive values, and anomaly values
+  anomalies_df <- data.frame(Start = integer(), End = integer(), Max_Value = numeric(), Intensity = numeric(), Duration = integer(), Consecutive_Values = integer(), Anomaly_Values = character())
+  
+  # Loop through anomalies and calculate intensity, duration, consecutive values, and anomaly values within each anomaly
+  for (i in seq_along(consecutive_exceedances$values)) {
+    if (consecutive_exceedances$values[i]) {
+      start_index <- sum(consecutive_exceedances$lengths[1:(i-1)]) + 1
+      end_index <- start_index + consecutive_exceedances$lengths[i] - 1
+      anomaly_values <- values[start_index:end_index] - mean_value  # Calculate anomaly as the difference from the mean
+      
+      max_value <- max(anomaly_values)
+      intensity <- mean(anomaly_values)
+      duration <- length(anomaly_values)
+
+      anomalies_df <- rbind(anomalies_df, data.frame(Start = start_index, End = end_index, Max_Value = max_value, Intensity = intensity, Duration = duration))
+    }
+  }
+  
+  return(anomalies_df)
+}
+
+# Example usage:
+set.seed(123)
+values <- rnorm(10000)
+anomalies_result <- detect_anomalies(values = x1$X0, percentile = 90)
+print(anomalies_result)
+
+
+prob_ee <- function(df, timespan){
+  df$Intensity <- round(df$Intensity)
+  df <- df %>%
+    group_by(Duration, Intensity) %>%
+      summarise(ee_count = length(Intensity),
+                prob = ee_count / timespan)
+  df
+}
+
+eeprobs <- prob_ee(df = anomalies_result, timespan = nrow(x1))

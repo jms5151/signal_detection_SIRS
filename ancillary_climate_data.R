@@ -202,31 +202,10 @@ for(i in climate_data){
     x1 <- create_P_metrics(df = x, t = historical_period_end)
     saveRDS(x1, file = paste0('../data/precip_metrics_', countryName, '.RData'))
     plot_future_rain(dfList = x1, locName = countryName)
-  } else {
+  } 
+  else {
     x1 <- create_T_metrics(df = x, t = historical_period_end)
     saveRDS(x1, file = paste0('../data/temp_metrics_', countryName, '.RData'))
   }
 }
 
-
-library(zoo)
-
-n = 14
-x <- rollapply(P_fut$X0, n, mean)
-x <- c(rep(NA, n-1), x)
-# plot.ts(x)
-df <- P_fut
-df$xwin <- x
-df$year <- format(df$time, '%Y')
-df1 <- df %>%
-  group_by(year) %>% summarise(
-    meanp = mean(xwin, na.rm = T)
-    , maxp = max(xwin, na.rm = T)
-    , perc90 = quantile(xwin, .90, na.rm = T)
-  )
-
-plot(df1$year, df1$meanp, pch = 16)
-abline(lm(df1$meanp ~ as.numeric(df1$year)))
-plot(df1$year, df1$maxp, pch = 16)
-plot(df1$year, df1$perc90, pch = 16)
-abline(lm(df1$perc90 ~ as.numeric(df1$year)))

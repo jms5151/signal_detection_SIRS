@@ -26,7 +26,7 @@ generate_extreme_event <- function(x, time1, time2, magnitude_change, duration, 
     end <- EE_timing + (duration-1)/2
   }
   x[start:end] <- x[start:end] + magnitude_change
-  return(x)  
+  return(list(x, start))  
 }
 
 simulate_daily_rainfall <- function(t, avg_days_with_rain_per_month, mean_total_rainfall_per_month) {

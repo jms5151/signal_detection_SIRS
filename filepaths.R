@@ -1,0 +1,1 @@
+scratch_path <- '/scratch/network/jc6991/'

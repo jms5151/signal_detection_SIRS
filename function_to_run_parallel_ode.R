@@ -2,9 +2,13 @@ library(doParallel)
 library(foreach)
 
 runParallelODE <- function(climate_list, xstart, times, model_function, params) {
-  # Set up parallel processing with doParallel
+  # Set up parallel processing with doParallel on PC
   cl <- makeCluster(detectCores())
+  # for cluster, needs to match #SBATCH cpus per task
+  # cl <- makeCluster(detectCores(20))
   registerDoParallel(cl)
+  
+  
   
   # Define the inner function for parallel execution
   runODE <- function(climate_var, params, model_function) {

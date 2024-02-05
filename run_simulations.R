@@ -19,13 +19,10 @@ source('Lambrechts_model.R')
 source('Eisenberg_model.R')
 source('function_to_run_parallel_ode.R')
 
-# Time span
-timeSeq <- function(Yrs){seq(from = 1, to = 365 * Yrs, by = 1)}
-ee.times <- timeSeq(Yrs = 3)
-cc.times <- timeSeq(Yrs = 80) # 2020 - 2100
-
-# simulate climate
-source('simulate_climate.R')
+# time span
+source('time_spans.R')
+# simulate climate, needs to be done once
+# source('simulate_climate.R')
 
 # Starting conditions
 vbd.start <- c(S = L_s, I = L_i, R = L_r)
@@ -39,6 +36,8 @@ ee.vbd.bg.sim <- runParallelODE(ee.vbd.bg, vbd.start, ee.times, model_function =
 
 ee.wbd.drc.sim <- runParallelODE(ee.wbd.drc, wbd.start, ee.times, model_function = Eisenberg_model, wbd.params)
 ee.wbd.hi.sim <- runParallelODE(ee.wbd.hi, wbd.start, ee.times, model_function = Eisenberg_model, wbd.params)
+
+# analyze ee simulations
 
 # climate change simulations
 # cc.vbd.br.sim <- runParallelODE(cc.vbd.br, vbd.start, cc.times, model_function = Lambrechts_model, vbd.params)

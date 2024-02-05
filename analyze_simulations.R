@@ -1,124 +1,50 @@
 # post-processing
 
-# calculate means and sds by group
-sumSIR <- function(sirout, groupfun){
-  names(sirout) <- gsub('^.*?_', '', names(sirout))
-  x <- lapply(sirout, function(x){groupfun(x)})
-  df <- data.frame()
-  for(i in 1:length(groups)){
-    groupIDs <- which(names(x) == groups[i])
-    m1 = mean(unlist(x[groupIDs]))
-    s1 = sd(unlist(x[groupIDs]))
-    df = rbind(df, c(m1, s1, groups[i]))
-  }
-  colnames(df) <- c('Mean', 'SD', 'Group')
-  df[,c('Mean', 'SD')] <- lapply(df[,c('Mean', 'SD')], as.numeric)
-  return(df)
+# load libraries
+library(pracma) # trapz
+library(moments)
+library(dplyr)
+library(tidyr)
+library(doParallel)
+library(foreach)
+
+# source file path and parameter values
+source('filepaths.R')
+source('parameter_values.R')
+source('functions_for_analysis.R')
+
+# list countries
+countries <- c('BurkinaFaso', 'Fiji', 'Italy', 'Pakistan', 'Philippines', 'Brazil', 'China', 'Ethiopia', 'Haiti', 'India', 'Sudan')
+
+# separate by model type / disease system
+vbd_countries <- countries[1:6]  # First 6 for 'vbd'
+wbd_countries <- countries[7:11] # Next 5 for 'wbd'
+
+# Create separate parameter data frames for each model type and their associated window lengths
+vbd_param_combinations <- expand.grid(
+  country = vbd_countries,
+  model_type = "vbd",
+  window_length = c(90, NA)
+)
+
+wbd_param_combinations <- expand.grid(
+  country = wbd_countries,
+  model_type = "wbd",
+  window_length = c(30, NA)
+)
+
+# Combine the parameter sets
+param_combinations <- rbind(vbd_param_combinations, wbd_param_combinations)
+
+# Register the cluster for parallel processing
+cl <- makeCluster(detectCores(25))
+registerDoParallel(cl)
+
+# Now, use these combined parameter combinations in your parallel foreach loop
+foreach (i = 1:nrow(param_combinations), .combine = 'c', .packages = c("dplyr")) %dopar% {
+  # Extract parameters for this iteration
+  params <- param_combinations[i, ]
+  parallel_function(params$country, params$model_type, params$window_length)
 }
 
-# calculate power and format
-calcPower <- function(x){
-  m1 = x$Mean[x$Group == 'normal']
-  s1 = x$SD[x$Group == 'normal']
-  x$Power = NA
-  for(i in 2:nrow(x)){
-    p <- pwrss.t.2means(mu1 = m1
-                        , mu2 = x$Mean[i]
-                        , sd1 = s1
-                        , sd2 = x$SD[i]
-                        , kappa = 1 # kappa = sample size 1 / sample size 2
-                        , n2 = Iterations
-                        , alpha = 0.05
-                        , alternative = "not equal")
-    x$Power[i] <- p$power
-  }
-  return(x)
-}
-
-# plot.ts(brazil_sir_out[[1]]$I)
-# for(i in 2:Iterations){
-#   lines(brazil_sir_out[[i]]$I)
-# }
-# abline(v = t1)
-# lines(brazil_sir_out[[600]]$I, col = 'lightblue')
-# abline(v = t1 + 100, col = 'red')
-# abline(v = t1 + 160, col = 'purple')
-# abline(v = t1 + 200, col = 'blue')
-
-library(stringr)
-
-heatFormat <- function(x, timing){
-  ids <- grep(timing, x$Group)
-  x3 <- x[ids,]
-  x3 <- cbind(x3, do.call(rbind, str_split(x3$Group, '_')))
-  colnames(x3)[5:6] <- c('temp', 'dur')
-  x3$temp <- gsub('C', '', x3$temp)
-  x3$dur <- gsub('d', '', x3$dur)
-  x3[,c('temp', 'dur')] <- lapply(x3[,c('temp', 'dur')], as.numeric)
-  # x4 <- unstack(x3[,c('temp', 'dur', 'Power')], Power ~ temp)
-  # rownames(x4) <- sort(unique(x3$dur))
-  return(x3)
-}
-
-# get group names (remove iteration identifier)
-groups <- unique(gsub('^.*?_', '', names(TS_BANGL)))
-
-# identify the time frame of interest based on when the extreme event occurred
-x <- unlist(lapply(ee.vbd.br.temp[1:Iterations], function(x) which(x == max(x[time1:time2]))))
-t1 = min(x) - 45
-t2 = t1 + 180
-
-# create functions for metric calculation
-groupFunSDBETA <- function(x){sd(x$beta[t1:t2])}
-groupFunSDRe <- function(x){sd(x$Re[t1:t2])}
-groupFunFS <- function(x){sum(x$I[t1:t2])}
-
-groupfuns <- list(groupFunSDBETA, groupFunSDRe, groupFunFS)
-# names(groupfuns) <- c('sd_beta', 'sd_Re', 'final_size')
-
-heatmapdf <- function(sirout, groupfun, nameID){
-  x <- sumSIR(sirout = sirout, groupfun = groupfun)
-  x2 <- calcPower(x = x)
-  for(i in ExEV_times){
-    x3 <- heatFormat(x = x2, timing = i)
-    write.csv(x3, paste0('../output/heatmap_', nameID, '_', i, '.csv'), row.names = F)
-  }
-}
-
-library(pwrss)
-heatmapdf(sirout = brazil_sir_out, groupfun = groupFunSDBETA, nameID = 'Brazil_sd_beta')
-heatmapdf(sirout = brazil_sir_out, groupfun = groupFunSDRe, nameID = 'Brazil_sd_Re')
-heatmapdf(sirout = brazil_sir_out, groupfun = groupFunFS, nameID = 'Brazil_final_size')
-
-
-heatmapdf(sirout = bangladesh_sir_out, groupfun = groupFunSDBETA, nameID = 'Bangladesh_sd_beta')
-heatmapdf(sirout = bangladesh_sir_out, groupfun = groupFunSDRe, nameID = 'Bangladesh_sd_Re')
-heatmapdf(sirout = bangladesh_sir_out, groupfun = groupFunFS, nameID = 'Bangladesh_final_size')
-
-library(ggplot2)
-library(RColorBrewer)
-
-myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
-sc <- scale_fill_gradientn(colours = myPalette(100))
-
-powerHeatMap <- function(df, titleName){
-  ggplot(df, aes(y = dur, x = temp, fill = Power)) + 
-    geom_tile() +
-    sc +  
-    labs(fill="Power", x = 'Temperature (degrees C)', y = 'Duration (days)') +
-    theme_classic() +
-    ggtitle(titleName)
-}
-
-files <- list.files('../output/', full.names = T)
-heatFiles <- files[grep('heatmap', files)]
-
-for(i in heatFiles){
-  dfheat <- read.csv(i)
-  plotName <- gsub('../output/heatmap_|.csv', '', i)
-  plotName <- gsub('_', ' ', plotName)
-  plotheat <- powerHeatMap(df = dfheat, titleName = plotName)
-  newfilepath <- gsub('output', 'figures', i)
-  newfilepath <- gsub('.csv', '.pdf', newfilepath)
-  ggsave(plotheat, file = newfilepath)
-}
+stopCluster(cl)

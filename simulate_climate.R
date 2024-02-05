@@ -1,86 +1,72 @@
 # extreme events simulations
-
 source('functions_to_simulate_climate.R')
+source('time_spans.R')
 
-# short term, extreme events
 # Global conditions
-load('data/historical_extremes.RData') # reference values from historical datasets
-t.Magnitudes = seq(1, 20, 1)
-t.Durations = seq(1, 15, 1)
-r.Magnitudes = seq(10, 200, 10)
-r.Durations = seq(1, 10, 1) 
+t.Magnitudes = seq(1, 15, 1)
+t.Durations = seq(1, 30, 1)
+r.Magnitudes = seq(10, 300, 10)
+r.Durations = seq(1, 14, 1) 
 ExEV_times = c('pre', 'peak', 'post')
-Iterations = 2
+Iterations = 100
 
 # extreme event occurs in second year of simulation
 t1 = 365
 t2 = 365 * 2
 
-# Local conditions calculated from weatherunderground data
-# from source('ancillary_climate_data.R')
-load('data/historical_temperature_values.RData')
-load('data/historical_rainfall_drc.RData')
-load('data/historical_rainfall_hi.RData')
+site_data <- list.files('../data/', full.names = T)
+site_data <- site_data[grepl('precip|temp', site_data)]
 
-# Generate extreme event time series
-ee.vbd.bg <- ee_list(
-  climType = 'temperature'
-  , times = ee.times
-  , iter = Iterations
-  , var1 = historical.temperature.values$mean[historical.temperature.values$loc == 'bg']
-  , var2 = historical.temperature.values$amp[historical.temperature.values$loc == 'bg']
-  , var3 = historical.temperature.values$sd[historical.temperature.values$loc == 'bg']
-  , magnitudes = t.Magnitudes
-  , durations = t.Durations
-  , timing = ExEV_times
-  , time1 = t1
-  , time2 = t2
-)
+# short term, extreme events
+for(i in site_data){
+  x <- readRDS(i)
+  # print range of values
+  # cat(i, ':\nIntensity = ', max(x[['prob_ee_hist']]$Intensity), ', Duration = ', max(x[['prob_ee_hist']]$Duration), '\n')
+  if(grepl('precip', i)){
+    v1 = x[['hist_precip_metrics']]$rainy_days
+    v2 = x[['hist_precip_metrics']]$total_rainfall
+    v3 = NA
+    climVar = 'rainfall'
+    mag = r.Magnitudes
+    dur = r.Durations
+    newFileName <- gsub('precip_metrics_', 'ee_data/ee_wbd_', i)
+  } else {
+    v1 = x[['hist_mean']]
+    v2 = x[['hist_amp']]
+    v3 = x[['hist_var']]
+    climVar = 'temperature'
+    mag = t.Magnitudes
+    dur = t.Durations
+    newFileName <- gsub('temp_metrics_', 'ee_data/ee_vbd_', i)
+  }
+  ee <- ee_list(
+    climType = climVar
+    , times = ee.times
+    , iter = Iterations
+    , var1 = v1
+    , var2 = v2
+    , var3 = v3
+    , magnitudes = mag
+    , durations = dur
+    , timing = ExEV_times
+    , time1 = t1
+    , time2 = t2
+  )
+  
+  # save start time of perturbation
+  ee_start_times <- lapply(ee, function(x) x[[2]])
+  ee_start_times <- ee_start_times[grepl('normal', names(ee_start_times))==F]
+  startFileName <- gsub('precip_metrics_|temp_metrics_', 'ee_start_time_', i)
+  saveRDS(ee_start_times, file = startFileName)
+          
+  # save ee time series data
+  ee2  <- lapply(ee[!grepl('normal', names(ee))], function(x) x[[1]])
+  ee2 <- c(ee[grepl('normal', names(ee))], ee2)
+  saveRDS(ee2, file = newFileName)
+}
 
-ee.vbd.br <- ee_list(
-  climType = 'temperature'
-  , times = ee.times
-  , iter = Iterations
-  , var1 = historical.temperature.values$mean[historical.temperature.values$loc == 'br']
-  , var2 = historical.temperature.values$amp[historical.temperature.values$loc == 'br']
-  , var3 = historical.temperature.values$sd[historical.temperature.values$loc == 'br']
-  , magnitudes = t.Magnitudes
-  , durations = t.Durations
-  , timing = ExEV_times
-  , time1 = t1
-  , time2 = t2
-)
-
-ee.wbd.drc <- ee_list(
-  climType = 'rainfall'
-  , times = ee.times
-  , iter = Iterations
-  , var1 = round(monthly.R.var.drc$rainy_days)
-  , var2 = monthly.R.var.drc$total_rainfall
-  , var3 = NA
-  , magnitudes = r.Magnitudes
-  , durations = r.Durations
-  , timing = 'peak'
-  , time1 = t1
-  , time2 = t2
-)
-
-ee.wbd.hi <- ee_list(
-  climType = 'rainfall'
-  , times = ee.times
-  , iter = Iterations
-  , var1 = round(monthly.R.var.hi$rainy_days)
-  , var2 = monthly.R.var.hi$total_rainfall
-  , var3 = NA
-  , magnitudes = r.Magnitudes
-  , durations = r.Durations
-  , timing = 'peak'
-  , time1 = t1
-  , time2 = t2
-)
-
-# generate climate change time series
-# cc.vbd.br <- cc_list()
-# cc.vbd.bg <- cc_list()
-# cc.wbd.drc <- cc_list()
-# cc.wbd.hi <- cc_list()
+rm(ee)
+rm(ee.clim)
+rm(ee2)
+rm(ee_start_times)
+rm(x)

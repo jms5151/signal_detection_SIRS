@@ -62,10 +62,10 @@ create_experiments_list <- function(x, start_times){
 
 # Function to get segment
 get_segment <- function(data, start_time, window_length) {
-  if(is.numeric(window_length)){
-    end_time <- start_time + window_length - 1
-  } else {
+  if(is.na(window_length) == T){
     end_time <- nrow(data)
+  } else {
+    end_time <- start_time + window_length - 1
   }
   subset(data, time >= start_time & time <= end_time)
 }
@@ -104,8 +104,8 @@ compute_stats <- function(experiment_data, control_data) {
     , Control_S_sd = sd(control_data$S)
     , Experiment_S_sd = sd(experiment_data$S)
     # AUC Infected
-    , Control_auc_I = trapz(control_data$I)
-    , Experiment_auc_I = trapz(experiment_data$I)
+    , Control_auc_I = pracma::trapz(control_data$I)
+    , Experiment_auc_I = pracma::trapz(experiment_data$I)
     # auc_Re <- trapz(x$Re)
     # Return time
     , Return_time = calc_return_time(x = control_data$I, y = experiment_data$I)
@@ -132,17 +132,19 @@ parallel_function <- function(country, model_type, window_length) {
   # open files
   fileNameMain <- paste0(scratch_path, 'results/ee_', model_type, '_', country, '.RData')
   df <- readRDS(fileNameMain)
+
+  # calculate Re values
+  if (model_type == 'vbd') {
+    df <- lapply(df, function(x) vbd_calc_Re(x, gamma = vbd.gamma))
+  } else {
+    df <- lapply(df, function(x) wbd_calc_Re(x, beta1 = wbd.beta1, mu = mu, gamma = wbd.gamma))
+  }
+  
+  # separate into control and experiment lists
   data_list <- create_control_list(x = df)
   fileNameStarts <- paste0(scratch_path, 'data/ee_start_time_', country, '.RData')
   startTimes <- readRDS(fileNameStarts)
   experiment_list <- create_experiments_list(x = df, start_times = startTimes)
-  
-  # calculate Re values
-  if (model_type == 'vbd') {
-    data_list <- lapply(data_list, function(x) vbd_calc_Re(x, gamma = vbd.gamma))
-  } else {
-    data_list <- lapply(data_list, function(x) wbd_calc_Re(x, beta1 = wbd.beta1, mu = mu, gamma = wbd.gamma))
-  }
   
   # compute stats
   results <- lapply(names(data_list), function(control_name) {
@@ -155,11 +157,11 @@ parallel_function <- function(country, model_type, window_length) {
   results_flattened <- bind_rows(lapply(results, bind_rows, .id = "Dataset"), .id = "List")
   
   # save
-  if(is.numeric(window_length) == T){
-    windowname = 'short'
+  if(is.na(window_length) == T){
+    windowname = 'long'
   } else {
-    'long'
+    'short'
   }
   saveName <- paste0(paste0(scratch_path, 'results/ee_sumarized_'), paste(model_type, country, windowname, sep='_'), '.RData')
-  save(results_flattened, file = saveName)
+  saveRDS(results_flattened, file = saveName)
 }

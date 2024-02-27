@@ -113,7 +113,7 @@ create_T_metrics <- function(df, t){
   
   # calculate probability of future extreme events
   yrs_fut <- round(as.numeric(difftime(T_fut$time[nrow(T_fut)], T_fut$time[1], units = 'weeks'))/52)
-  anomalies_result_fut <- detect_anomalies(values = T_hist$X0, threshold = thr, mean_value = hist_mean)
+  anomalies_result_fut <- detect_anomalies(values = T_fut$X0, threshold = thr, mean_value = hist_mean)
   eeprobs_fut <- prob_ee(df = anomalies_result_fut, timespan = yrs_fut)
   
   # calculate climate change metrics for simulations
@@ -147,7 +147,7 @@ create_P_metrics <- function(df, t){
   
   # calculate probability of future extreme events
   yrs_fut <- round(as.numeric(difftime(P_fut$time[nrow(P_fut)], P_fut$time[1], units = 'weeks'))/52)
-  anomalies_result_fut <- detect_anomalies(values = P_hist$X0, threshold = thr, mean_value = hist_mean)
+  anomalies_result_fut <- detect_anomalies(values = P_fut$X0, threshold = thr, mean_value = hist_mean)
   eeprobs_fut <- prob_ee(df = anomalies_result_fut, timespan = yrs_fut)
   
   # calculate climate change metrics for simulations

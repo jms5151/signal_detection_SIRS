@@ -14,11 +14,8 @@ source('parameter_values.R')
 source('functions_for_analysis.R')
 
 # list countries
-countries <- c('BurkinaFaso', 'Fiji', 'Italy', 'Pakistan', 'Philippines', 'Brazil', 'China', 'Ethiopia', 'Haiti', 'India', 'Sudan')
-
-# separate by model type / disease system
-vbd_countries <- countries[1:6]  # First 6 for 'vbd'
-wbd_countries <- countries[7:11] # Next 5 for 'wbd'
+vbd_countries <- c('Brazil', 'BurkinaFaso', 'Fiji', 'Italy', 'Pakistan', 'Philippines')
+wbd_countries <- c('China', 'Ethiopia', 'Haiti', 'India', 'Sudan')
 
 # Create separate parameter data frames for each model type and their associated window lengths
 vbd_param_combinations <- expand.grid(

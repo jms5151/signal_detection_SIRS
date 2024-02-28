@@ -24,27 +24,9 @@ far <- function(p0, p1){
   (p1 - p0)/p1
 }
 
-# should fix these for cholera
-backfar <- function(FAR){
-  p0 = unname(quantile(dengue$R0, 0.5))
-  p1 = -p0/(FAR-1)
-  return(p1)
-}
-
-backfar(0.1815844)
-
 rr <- function(p0, p1){
   p1/p0
 }
-
-backrr <- function(RR){
-  p0 = unname(quantile(dengue$R0, 0.5))
-  p1 = RR * p0
-  return(p1)
-}
-  
-# backfar(0.83)
-# backrr(0.189)
 
 da_df <- function(meanr0, maxr0, x){
   # R0
@@ -85,13 +67,8 @@ da_df <- function(meanr0, maxr0, x){
   probs$classification[round(probs$hist_prob, 2) == 0.01] <- '100-yr event'
   
   probs$classification <- factor(probs$classification, levels = c('1-yr event', '5-yr event', '10-yr event', '50-yr event', '100-yr event'))
-  
-  # add r0 probs
-  # will need to update for cholera
-  probs$R0_FAR_p1 <- backfar(probs$FAR)
-  probs$R0_RR_p1 <- backrr(probs$RR)
-  
-  return(probs[, c('FAR', 'RR', 'r0_FAR', 'r0_RR', 'excess_FAR', 'excess_RR', 'classification', 'R0_FAR_p1', 'R0_RR_p1')])
+
+  return(probs[, c('FAR', 'RR', 'r0_FAR', 'r0_RR', 'excess_FAR', 'excess_RR', 'classification')])
 }
 
 # create new dataframe
@@ -127,8 +104,9 @@ farplot <- ggplot(df, aes(x = FAR, y = r0_FAR, group = Site, color = ModelType, 
   geom_point() +
   theme_bw() +
   ylab('Min R0 to obtain equivalent FAR') +
-  xlab('Climate FAR') #+
+  xlab('Climate FAR') +
   xlim(0,1)
+
 ggsave(farplot, file = paste0(plotdir, 'R0_FAR.pdf'))
   
 rrplot <- ggplot(df, aes(x = RR, y = r0_RR, color = ModelType, shape = Site)) +
@@ -138,7 +116,9 @@ rrplot <- ggplot(df, aes(x = RR, y = r0_RR, color = ModelType, shape = Site)) +
   theme_bw() +
   ylab('Min R0 to obtain equivalent RR') +
   xlab('Climate RR') +
-  geom_vline(xintercept = 1, linetype = 'dashed')
+  geom_vline(xintercept = 1, color = 'grey', linetype = 'dashed') +
+  geom_hline(yintercept = dengue.meanR0, color = 'orange', linetype = 'dashed') +
+  geom_hline(yintercept = cholera.meanR0, color = 'lightblue', linetype = 'dashed')
 
 ggsave(rrplot, file = paste0(plotdir, 'R0_RR.pdf'))
 
@@ -166,7 +146,6 @@ exrrplot <- ggplot(df, aes(x = RR, y = excess_RR/100000, color = ModelType, shap
 ggsave(exrrplot, file = paste0(plotdir, 'Excess_RR.pdf'))
 
 dfa <- subset(df, !is.na(classification))
-# dfa <- subset(df, )
 
 classificationfar <- ggplot(dfa, aes(x = classification, y =  r0_FAR, fill = ModelType)) + 
   geom_boxplot() + 
@@ -180,34 +159,5 @@ ggsave(classificationfar, file = paste0(plotdir, 'Class_FAR.pdf'))
 
 # ggplot(dfa, aes(x = classification, y =  r0_RR)) + geom_boxplot() + theme_bw() + facet_grid(~ModelType)
 
-# relative p1s
-dfb <- subset(df, ModelType == 'vbd')
-ggplot(dfb, aes(x = FAR, y = R0_FAR_p1, group = Site, shape = Site)) +
-  scale_shape_manual(values=1:length(unique(df$Site))) +
-  scale_color_manual(values = c('vbd' = 'orange', 'wbd' = 'lightblue')) +
-  geom_point() +
-  theme_bw() +
-  ylab('R0 extreme to reach equivalent FAR') +
-  xlab('Climate FAR') +
-  xlim(0,1) +
-  ylim(0,2.5)
-
-ggplot(dfb, aes(x = RR, y = R0_RR_p1, shape = Site)) +
-  scale_shape_manual(values=1:length(unique(df$Site))) +
-  scale_color_manual(values = c('vbd' = 'orange', 'wbd' = 'lightblue')) +
-  geom_point() +
-  theme_bw() +
-  ylab('R0 extreme to reach equivalent RR') +
-  xlab('Climate RR') +
-  geom_vline(xintercept = 1, linetype = 'dashed') +
-  geom_hline(yintercept = dengue.meanR0)
-
-ggplot(dfa, aes(x = classification, y =  R0_RR_p1, fill = ModelType)) + 
-  geom_boxplot() + 
-  scale_fill_manual(values = c('vbd' = 'orange', 'wbd' = 'lightblue')) +
-  theme_bw() +
-  scale_y_continuous(minor_breaks = seq(0, 30, 1)) +
-  xlab('Extreme event frequency') +
-  ylab('R0 range to obtain equivalent FAR/RR')
 
 

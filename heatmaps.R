@@ -66,3 +66,59 @@ ggplot(test, aes(x = Variable, y = region_ee_timing, fill = powerAbove80)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x axis labels if needed
 
+
+
+
+### distributions of ee events
+site_data <- list.files('../data/', full.names = T)
+site_data <- site_data[grepl('precip|temp', site_data)]
+
+library(tidyverse)
+distr <- data.frame()
+
+for(i in site_data){
+  x <- readRDS(i)
+  x0 <- x$prob_ee_hist
+  x0$time_period <- 'A. historical'
+  x1 <- x$prob_ee_fut
+  x1$time_period <- 'B. future'
+  x2 <- rbind(x0, x1)
+  # colnames(x0)[4] <- 'hist_prob'
+  # colnames(x1)[4] <- 'fut_prob'
+  # x2 <- x0[,c('Duration', 'Intensity', 'hist_prob')] %>%
+    # full_join(x1[,c('Duration', 'Intensity', 'fut_prob')])
+  # x2$prob_diff <- x2$fut_prob - x2$hist_prob
+  x2$country <- gsub('../data/|metrics_|precip_|temp_|.RData$', '', i)
+  x2$ModelType <- ifelse(grepl('precip', i)==T, 'wbd', 'vbd')
+  distr <- rbind(distr, x2)
+}
+
+rain = subset(distr, ModelType == 'wbd' & time_period == 'A. historical')
+temp = subset(distr, ModelType == 'vbd' & time_period == 'A. historical')
+
+# savedir2 <- '../figures/heatmaps/'
+
+# Calculate breaks and labels for the legend
+log_breaks <- log(seq(1, 1000, length.out = 3)) # Adjust based on your data range and desired breaks
+labels <- round(exp(log_breaks)) # Convert back to original scale for labels
+
+ggplot(temp, aes(x = Intensity, y = Duration, fill = log(ee_count))) + 
+  geom_tile() + # Use geom_tile for heatmap
+  scale_fill_gradientn(colours = myPalette(100), 
+                       breaks = log_breaks, 
+                       labels = labels) +
+  theme_bw() +
+  facet_wrap(~country) +
+  # facet_grid(country ~ time_period) +
+  labs(fill = "Event Count\n(log space)") #+
+  xlim(0,10) +
+  ylim(0,20)
+
+
+## Difference
+ggplot(temp, aes(x = Intensity, y = Duration, fill = prob_diff)) + 
+  geom_tile() + # Use geom_tile for heatmap
+  scale_fill_gradientn(colours = myPalette(100)) +
+  theme_bw() +
+  facet_wrap(~country) #+
+  xlim(0,100)

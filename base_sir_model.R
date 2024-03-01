@@ -8,25 +8,30 @@ sir_model <- function(t, state, params) {
       dI <- (betaW[t] * S * W) + (beta[t] * S * I) - (gamma * I) - (mu * I)
       dW <- eta * (I - W) 
       dR <- (gamma * I) - (mu * R)
-      return(list(c(dS, dI, dW, dR)))
+      return(list(c(dS, dI, dW, dR), betaW = betaW[t], beta = beta[t]))
     }
   )
 } 
 
 # sampling times
-years <- 20
+years <- 3
 times <- seq(from = 1, to = 365 * years, by = 1)
 
 # create climate cos wave
-frequency <- 4*pi/length(times)
+# 4 for 2 rainy seasons
+frequency <- 2*years*pi/length(times)
 days <- seq(1, length(times), by = 1)
-x = 20
-y = 10
-k <- (x + y)/2 + (x - y)/2 * cos(days * frequency)
+x = 150
+y = 0
+# I wonder if we want to use sin
+k <- (x + y)/2 + (x - y)/2 * cos(days * frequency) #+ rnorm(length(times), 10, 15)
 plot.ts(k)
 
-# source('functions_to_simulate_climate.R')
-k_extreme <- generate_extreme_event(x = k, time1 = 10, time2 = 2000, magnitude_change = 200, duration = 15, timing = 'peak')
+# k2 <- mean(c(x, y)) + (x - y)/2 * sin((2 * pi) / 365 * times)
+# lines(k2, col = 'red')
+
+source('functions_to_simulate_climate.R')
+k_extreme <- generate_extreme_event(x = k, time1 = 100, time2 = 500, magnitude_change = 200, duration = 15, timing = 'peak')
 # k_extreme <- generate_extreme_event(x = k, time1 = 100, time2 = 300, magnitude_change = 400, duration = 55, timing = 'peak')
 
 plot.ts(k_extreme[[1]], col = 'blue')
@@ -74,7 +79,6 @@ s = 1-0.0069
 i = 0.0069
 w = 0.01
 r = 0
-
 xstart <- c(S = s, I = i, W = w, R = r)
 
 # wbd_beta <- sapply(ethiopia$iter5_normal, function(x) Eisenberg_beta(x))
@@ -83,6 +87,10 @@ xstart <- c(S = s, I = i, W = w, R = r)
 # lines(wbd_beta)
 
 # SIR parameter values ---
+k <- (x + y)/2 + (x - y)/2 * cos(days * frequency) + rnorm(length(times), 10, 5)
+k[k<0]<-0
+wbd_beta <- sapply(k, function(x) Eisenberg_beta(x))
+
 params <- list(
   gamma =  1 / 4 # recovery rate / inverse generation time
   , beta = rep(0.243, length(wbd_beta))
@@ -91,13 +99,13 @@ params <- list(
   , mu = 7*10e-04#1/(74*365)
 )
 
-params <- list(
-  gamma =  1 / 15 # recovery rate / inverse generation time
-  , beta = vbd_beta
-  , betaW = rep(0, length(times))
-  , eta = 0
-  , mu = 7*10e-04#1/(74*365)
-)
+# params <- list(
+#   gamma =  1 / 15 # recovery rate / inverse generation time
+#   , beta = vbd_beta
+#   , betaW = rep(0, length(times))
+#   , eta = 0
+#   , mu = 7*10e-04#1/(74*365)
+# )
 
 out <- as.data.frame(
   ode(
@@ -111,6 +119,7 @@ out <- as.data.frame(
 plot.ts(out$I)
 lines(out$I, col = 'blue')
 lines(out$I, col = 'purple')
+lines(out$I, col = 'orange')
 # range(out$bW)
 # plot(out$S, out$I, type = 'l')
 #

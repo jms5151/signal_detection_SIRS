@@ -1,11 +1,3 @@
-simulate_daily_temperature <- function(climate_mean, amplitude, daily_var, t){
-  error <- rnorm(t, mean = 0, sd = daily_var)
-  # classic calculation
-  # vertical_shift + amplitude * sin(period * pi + t/phase_shift) #+ error
-  # following Huber et al, where amplitude = Tmax - Tmin
-  climate_mean + amplitude * sin((2 * pi) / 365 * t) + error
-}
-
 temperature_with_trend <- function(climate_mean, amplitude, yearly_trend, t, variability_coef) {
   error <- rnorm(t, mean = 0, sd = variability_coef * t / 365)
   climate_mean + amplitude * sin((2 * pi) / 365 * t) + (yearly_trend * t / 365) + error

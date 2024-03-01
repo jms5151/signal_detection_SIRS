@@ -10,14 +10,16 @@ calc_daily_variability <- function(df){
   mean(df$daily_var)
 }
 
-historical_amp <- function(df){
-  df$year <- format(df$time, '%Y')
-  df <- df %>%
-    group_by(year) %>%
-    summarise(amp = (max(X0) - min(X0))/2)
-  mean(df$amp)
-}
+# historical_amp <- function(df){
+#   df$year <- format(df$time, '%Y')
+#   df <- df %>%
+#     group_by(year) %>%
+#     summarise(amp = (max(X0) - min(X0))/2)
+#   mean(df$amp)
+# }
 
+# should anomalies be deviation from mean or threshold?
+# should intensity be a weighted average instead of mean or max?
 detect_anomalies <- function(values, mean_value, threshold) {
   
   # Identify values exceeding the threshold

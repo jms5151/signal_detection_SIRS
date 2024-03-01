@@ -13,30 +13,6 @@ sir_model <- function(t, state, params) {
   )
 } 
 
-# sampling times
-years <- 3
-times <- seq(from = 1, to = 365 * years, by = 1)
-
-# create climate cos wave
-# 4 for 2 rainy seasons
-frequency <- 2*years*pi/length(times)
-days <- seq(1, length(times), by = 1)
-x = 150
-y = 0
-# I wonder if we want to use sin
-k <- (x + y)/2 + (x - y)/2 * cos(days * frequency) #+ rnorm(length(times), 10, 15)
-plot.ts(k)
-
-# k2 <- mean(c(x, y)) + (x - y)/2 * sin((2 * pi) / 365 * times)
-# lines(k2, col = 'red')
-
-source('functions_to_simulate_climate.R')
-k_extreme <- generate_extreme_event(x = k, time1 = 100, time2 = 500, magnitude_change = 200, duration = 15, timing = 'peak')
-# k_extreme <- generate_extreme_event(x = k, time1 = 100, time2 = 300, magnitude_change = 400, duration = 55, timing = 'peak')
-
-plot.ts(k_extreme[[1]], col = 'blue')
-lines(k)
-
 Lambrechts_beta <- function(climate_var){
   # median estimate from Reunion Island outbreaks for b0
   b0 = 1.14492
@@ -56,40 +32,9 @@ Eisenberg_beta <- function(climate_var){
   return(bW * climate_var)
 }
 
-df <- readRDS('../data/ee_data/ee_wbd_Ethiopia.RData')
-wbd_beta <- sapply(df$iter1_normal, function(x) Eisenberg_beta(x))
-wbd_beta_extreme <- sapply(df$iter1_100mm_10d_peak, function(x) Eisenberg_beta(x))
-plot.ts(wbd_beta_extreme, col = 'blue')
-lines(wbd_beta)
-
-vbd_beta <- sapply(k, function(x) Lambrechts_beta(x))
-vbd_beta_extreme <- sapply(k_extreme[[1]], function(x) Lambrechts_beta(x))
-wbd_beta <- sapply(k, function(x) Eisenberg_beta(x))
-wbd_beta_extreme <- sapply(k_extreme[[1]], function(x) Eisenberg_beta(x))
-
-plot.ts(vbd_beta)
-plot.ts(wbd_beta)
-
-# state variable starting values
-# s = 0.039
-# i = 0.001
-# r = 0.06
-
-s = 1-0.0069
-i = 0.0069
-w = 0.01
-r = 0
-xstart <- c(S = s, I = i, W = w, R = r)
-
-# wbd_beta <- sapply(ethiopia$iter5_normal, function(x) Eisenberg_beta(x))
-# wbd_beta_extreme <- sapply(ethiopia$iter5_200mm_13d_peak, function(x) Eisenberg_beta(x))
-# plot.ts(wbd_beta_extreme, col = 'blue')
-# lines(wbd_beta)
-
-# SIR parameter values ---
-k <- (x + y)/2 + (x - y)/2 * cos(days * frequency) + rnorm(length(times), 10, 5)
-k[k<0]<-0
-wbd_beta <- sapply(k, function(x) Eisenberg_beta(x))
+# sampling times
+years <- 3
+times <- seq(from = 1, to = 365 * years, by = 1)
 
 params <- list(
   gamma =  1 / 4 # recovery rate / inverse generation time
@@ -99,13 +44,13 @@ params <- list(
   , mu = 7*10e-04#1/(74*365)
 )
 
-# params <- list(
-#   gamma =  1 / 15 # recovery rate / inverse generation time
-#   , beta = vbd_beta
-#   , betaW = rep(0, length(times))
-#   , eta = 0
-#   , mu = 7*10e-04#1/(74*365)
-# )
+params <- list(
+  gamma =  1 / 15 # recovery rate / inverse generation time
+  , beta = vbd_beta
+  , betaW = rep(0, length(times))
+  , eta = 0
+  , mu = 7*10e-04#1/(74*365)
+)
 
 out <- as.data.frame(
   ode(
@@ -120,8 +65,3 @@ plot.ts(out$I)
 lines(out$I, col = 'blue')
 lines(out$I, col = 'purple')
 lines(out$I, col = 'orange')
-# range(out$bW)
-# plot(out$S, out$I, type = 'l')
-#
-
-# Changing gamma changes magnitude

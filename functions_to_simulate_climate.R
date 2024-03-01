@@ -1,8 +1,14 @@
-temperature_with_trend <- function(climate_mean, amplitude, yearly_trend, t, variability_coef) {
-  error <- rnorm(t, mean = 0, sd = variability_coef * t / 365)
-  climate_mean + amplitude * sin((2 * pi) / 365 * t) + (yearly_trend * t / 365) + error
+# function to simulate a climate time series
+
+simulate_seasonal_climate <- function(xmin, xmax, xvar, seasons, years){
+  t <- seq(from = 1, to = 365 * years, by = 1)
+  error <- rnorm(t, mean = 0, sd = xvar)
+  frequency <- seasons * 2 * years * pi / length(t)
+  ts <- (xmax + xmin)/2 + (xmax - xmin)/2 * sin(days * frequency) + error
+  return(ts)
 }
 
+# function to generate an extreme event for a given climate time series
 generate_extreme_event <- function(x, time1, time2, magnitude_change, duration, timing){
   EE_timing <- which(x == max(x[time1:time2]))[1] # peak between time 1 and time 2 
   if(timing == 'pre'){
@@ -21,48 +27,15 @@ generate_extreme_event <- function(x, time1, time2, magnitude_change, duration, 
   return(list(x, start))  
 }
 
-simulate_daily_rainfall <- function(t, avg_days_with_rain_per_month, mean_total_rainfall_per_month) {
-  # Initialize daily rainfall vector
-  rainfall <- numeric(length(t))
-  
-  # Validate input vectors
-  if (length(avg_days_with_rain_per_month) != 12 || length(mean_total_rainfall_per_month) != 12) {
-    stop("Input vectors must have 12 values, one for each month.")
-  }
-  
-  # Loop through each day in the simulation
-  for (day in 1:length(t)) {
-    # Determine the current month
-    current_month <- ((day - 1) %% 360) %/% 30 + 1
-    
-    # Ensure non-negative values for avg_days_with_rain_per_month
-    avg_days_with_rain <- max(0, avg_days_with_rain_per_month[current_month])
-    
-    # Generate random number of rainy days for the month using rpois
-    rainy_days <- max(0, rpois(1, lambda = avg_days_with_rain))
-    
-    # Check if it's a rainy day
-    if (is.finite(rainy_days) && rainy_days > 0) {
-      # Ensure non-negative values for mean_total_rainfall_per_month
-      mean_rainfall <- max(0, mean_total_rainfall_per_month[current_month] / rainy_days)
-      
-      # Generate random daily rainfall for each rainy day
-      if (runif(1) < 1 / rainy_days) {
-        # rainfall[day] <- rnorm(1, mean = mean_rainfall, sd = mean_rainfall * 0.10)
-        rainfall[day] <- rexp(1, rate = 1 / mean_rainfall)
-      }
-    }
-  }
-  
-  return(rainfall)
-}
-
+# create a list of extreme events
 ee_list <- function(climType, times, iter, var1, var2, var3, magnitudes, durations, timing, time1, time2){
+  # generate 'normal' climate time series
+  x1 <- lapply(1:iter, function(i) simulate_seasonal_climate(xmin, xmax, xvar, seasons, years))
+  
+  # generate extreme event time series
   if(climType == 'temperature'){
-    x1 <- lapply(1:iter, function(i) simulate_daily_temperature(climate_mean = var1, amplitude = var2, daily_var = var3, t = times))
     magUnit <- 'C'
   } else if(climType == 'rainfall'){
-    x1 <- lapply(1:iter, function(i) simulate_daily_rainfall(t = times, avg_days_with_rain_per_month = var1, mean_total_rainfall_per_month = var2))
     magUnit <- 'mm'
   }
   names(x1) <- paste0('iter', seq(1,iter), '_normal')

@@ -2,23 +2,26 @@
 source('state_variables.R')
 source('parameter_values.R')
 
-# source model
+# source models
 source('Lambrechts_model.R')
-source('function_to_run_parallel_ode.R')
 
-# Time span
+# source functions to run models
+source('function_to_run_parallel_ode.R')
+source('functions_to_calculate_beta.R')
+
+# time span
 source('time_spans.R')
+
+# Starting conditions
+vbd.start <- c(S = s, I = i, R = r)
 
 # filepath
 source('filepaths.R')
 
-# Starting conditions
-vbd.start <- c(S = L_s, I = L_i, R = L_r)
-
 # Run models
 args = commandArgs(trailingOnly = TRUE)
 
-inputFilePath <- paste0(scratch_path, 'data/ee_vbd_', args, '.RData')
+inputFilePath <- paste0(scratch_path, 'data/', args, '_beta_ts.RData')
 INPUT <- readRDS(inputFilePath)
 
 # Extreme event simulations

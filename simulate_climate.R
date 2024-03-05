@@ -1,6 +1,7 @@
 # extreme events simulations
 source('functions_to_simulate_climate.R')
 source('time_spans.R')
+source('functions_to_calculate_beta.R')
 
 # Global conditions
 t.Magnitudes = seq(1, 10, 1) # 10
@@ -53,7 +54,7 @@ for(i in site_data){
   ee <- ee_list(
     x = df
     , s = slength
-    , years = years
+    , years = Yrs
     , iter = Iterations
     , magnitudes = mag
     , durations = dur
@@ -65,17 +66,20 @@ for(i in site_data){
   # save start time of perturbation
   ee_start_times <- lapply(ee, function(x) x[[2]])
   ee_start_times <- ee_start_times[grepl('normal', names(ee_start_times))==F]
-  startFileName <- gsub('climate_metrics_', 'ee_start_time_', i)
+  startFileName <- gsub('climate_metrics_', 'ee_start_times/ee_start_time_', i)
   saveRDS(ee_start_times, file = startFileName)
           
   # save climate time series data
   ee2  <- lapply(ee[!grepl('normal', names(ee))], function(x) x[[1]])
   ee2 <- c(ee[grepl('normal', names(ee))], ee2)
-  climFileName <- paste0('../data/climate_ts_', country, '.RData')
+  climFileName <- paste0('../data/climate_ts/climate_ts_', country, '.RData')
   saveRDS(ee2, file = climFileName)
   
   # translate climate time series to beta values
-  ee_betas <- lapply(ee2, function(x) betafun(x))
-  betaFileName <- paste0('../data/', country, '_beta_ts.RData')
+  ee_betas <- lapply(ee2, function(sub_list) {
+    unlist(lapply(sub_list, betafun))
+  })
+  
+  betaFileName <- paste0('../data/beta_ts/', country, '_beta_ts.RData')
   saveRDS(ee_betas, file = betaFileName)
 }

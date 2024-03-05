@@ -161,3 +161,103 @@ ggsave(classificationfar, file = paste0(plotdir, 'Class_FAR.pdf'))
 
 
 
+min1 # min to plot climate-metric relationship
+min2 # min to test climate-metric relationship
+max1 # max to plot climate-metric relationship
+max2 # max to test climate-metric relationship
+seqstep1 # step size to plot climate-metric relationship
+seqstep2 # step size to test climate-metric relationship
+peak # highest climate value to test for climate-metric relationship
+betafun # beta function
+xlimmax # plotting x limit
+ylimmax # plotting y limit
+params # disease parameters
+xlabname # xlabname to plot climate-metric relationship 
+
+plot_tri_plot <- function(min1, max1, seqstep1, min2, max2, seqstep2, betafun, xlimmax1, ylimmax1, xlimmax2, ylimmax2, params, xlabname){
+  valstotest <- seq(from = min2, to = max2, by = seqstep2)
+  linecols <- rainbow(length(valstotest))
+  h = seq(250, 10, length.out = length(valstotest))
+  linecols <- hcl(h, c = 100, l = 65)
+  
+  par(mfrow = c(3,1), mai = c(0.8, 0.6, 0.1, 0.1))
+  # plot 1: beta - climate relationship
+  climseq <- seq(from = min1, to = max1, by = seqstep1)
+  climbeta <- sapply(climseq, function(x) betafun(x))
+  plot(climseq, climbeta, type = 'l', ylab = 'Transmission Rate', xlab = xlabname)
+  for(i in 1:length(valstotest)){
+    abline(v = c(valstotest[i]), col = linecols[i], lty = 2)
+  }
+  
+  # plot 2: RR verses beta
+  for(j in 1:length(valstotest)){
+    beta90 <- betafun(valstotest[j])
+    betaseq <- seq(beta90, max(climbeta), 0.01)
+    betarr <- sapply(betaseq, function(x) rr(p0 = beta90, p1 = x))
+    if(valstotest[j] == min(valstotest)){
+      plot(betaseq, betarr, type = 'l', xlim = c(0, xlimmax1), ylim =  c(0, ylimmax1), col = linecols[j], ylab = 'Relative Risk', xlab = 'Transmission Rate')
+    } else {
+      lines(betaseq, betarr, pch = 16, col = linecols[j])
+    }
+  }
+  
+  # plot 3: RR verses R0
+  for(k in 1:length(valstotest)){
+    beta90 <- betafun(valstotest[k])
+    betaseq <- seq(beta90, max(climbeta), 0.01)
+    if(xlabname == 'Temperature'){
+      re <- sapply(betaseq, function(x) x/(params$mu + params$gamma))
+    } else {
+      re <- sapply(betaseq, function(x) (x + params$beta1)/(params$mu + params$gamma))
+    }
+    if(beta90 > 0){
+      rerr <- sapply(re, function(x) rr(p0 = beta90, p1 = x))
+    } else {
+      rerr <- sapply(re, function(x) rr(p0 = beta90+1, p1 = x))
+    }
+    if(k == 1){
+      plot(re, rerr, type = 'l', xlim = c(0, xlimmax2), ylim =  c(0, ylimmax2), col = linecols[k], ylab = 'Relative Risk', xlab = 'R0')
+    } else {
+      lines(re, rerr, col = linecols[k])
+    }
+    
+  }
+}
+
+pdf('../figures/analytical_solution/VBD_RR.pdf', width = 4, height = 8)
+tempplot <- plot_tri_plot(
+  min1 = 10 # min to plot climate-metric relationship
+  , max1 = 38# max to plot climate-metric relationship
+  , seqstep1 = 0.01# step size to plot climate-metric relationship
+  , min2 = 13 # min to test climate-metric relationship
+  , max2 = 35 # max to test climate-metric relationship
+  , seqstep2 = 1 # step size to test climate-metric relationship
+  , betafun = Lambrechts_beta # beta function
+  , xlimmax1 = 1.1 # plotting x limit
+  , ylimmax1 = 10 # plotting y limit
+  , xlimmax2 = 15 
+  , ylimmax2 = 80
+  , params = vbd.params # disease parameters
+  , xlabname = 'Temperature'# xlabname to plot climate-metric relationship 
+)
+dev.off()
+
+pdf('../figures/analytical_solution/WBD_RR.pdf', width = 4, height = 8)
+rainplot <- plot_tri_plot(
+  min1 = 0 # min to plot climate-metric relationship
+  , max1 = 300 # max to plot climate-metric relationship
+  , seqstep1 = 1# step size to plot climate-metric relationship
+  , min2 = 5 # min to test climate-metric relationship
+  , max2 = 80 # max to test climate-metric relationship
+  , seqstep2 = 5 # step size to test climate-metric relationship
+  , betafun = Eisenberg_beta # beta function
+  , xlimmax1 = 0.4 # plotting x limit
+  , ylimmax1 = 50 # plotting y limit
+  , xlimmax2 = 2.5
+  , ylimmax2 = 100
+  , params = wbd.params # disease parameters
+  , xlabname = 'Rainfall'# xlabname to plot climate-metric relationship 
+)
+dev.off()
+
+

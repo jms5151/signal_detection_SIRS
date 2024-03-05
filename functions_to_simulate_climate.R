@@ -1,10 +1,9 @@
 # function to simulate a climate time series
-
 simulate_seasonal_climate <- function(xmin, xmax, xvar, seasons, years){
   t <- seq(from = 1, to = 365 * years, by = 1)
   error <- rnorm(t, mean = 0, sd = xvar)
   frequency <- seasons * 2 * years * pi / length(t)
-  ts <- (xmax + xmin)/2 + (xmax - xmin)/2 * sin(days * frequency) + error
+  ts <- (xmax + xmin)/2 + (xmax - xmin)/2 * sin(t * frequency) + error
   return(ts)
 }
 
@@ -27,29 +26,29 @@ generate_extreme_event <- function(x, time1, time2, magnitude_change, duration, 
   return(list(x, start))  
 }
 
-# create a list of extreme events
-ee_list <- function(climType, times, iter, var1, var2, var3, magnitudes, durations, timing, time1, time2){
-  # generate 'normal' climate time series
-  x1 <- lapply(1:iter, function(i) simulate_seasonal_climate(xmin, xmax, xvar, seasons, years))
-  
-  # generate extreme event time series
-  if(climType == 'temperature'){
-    magUnit <- 'C'
-  } else if(climType == 'rainfall'){
-    magUnit <- 'mm'
-  }
+# create a list of normal and extreme events
+ee_list <- function(x, s, years, iter, magnitudes, durations, timing, time1, time2){
+  # generate 'normal' time series
+  x1 <- lapply(1:iter, function(i) 
+    simulate_seasonal_climate(
+      xmin = x$min
+      , xmax = x$max
+      , xvar = x$var
+      , seasons = s
+      , years = years)
+  )
   names(x1) <- paste0('iter', seq(1,iter), '_normal')
+  # generate 'extreme' events for each 'normal' time series
   newlist <- x1
   for(mag in magnitudes){
     for(dur in durations){
       for(tim in timing){
         x2 <- lapply(x1, function(i) 
           generate_extreme_event(x = i, magnitude_change = mag, time1 = time1, time2 = time2, duration = dur, timing = tim))
-        names(x2) <- paste0('iter', seq(1, iter), '_', mag, magUnit, '_', dur, 'd_', tim)
+        names(x2) <- paste0('iter', seq(1, iter), '_', mag, 'I_', dur, 'D_', tim)
         newlist <- c(newlist, x2)
       }
     }
   }
   return(newlist)
 }
-

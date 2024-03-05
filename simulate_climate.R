@@ -3,49 +3,58 @@ source('functions_to_simulate_climate.R')
 source('time_spans.R')
 
 # Global conditions
-t.Magnitudes = seq(1, 15, 1)
-t.Durations = seq(1, 30, 1)
-r.Magnitudes = seq(10, 300, 10)
-r.Durations = seq(1, 14, 1) 
+t.Magnitudes = seq(1, 10, 1) # 10
+t.Durations = seq(1, 40, 1) # 40
+r.Magnitudes = seq(5, 100, 5) # 100
+r.Durations = seq(1, 15, 1)  # 15
 ExEV_times = c('pre', 'peak', 'post')
-Iterations = 100
+Iterations = 5
 
 # extreme event occurs in second year of simulation
 t1 = 365
 t2 = 365 * 2
 
-site_data <- list.files('../data/', full.names = T)
-site_data <- site_data[grepl('precip|temp', site_data)]
+# list countries
+vbd_countries <- c('Brazil', 'BurkinaFaso', 'Fiji', 'Italy', 'Pakistan', 'Philippines')
+wbd_countries <- c('China', 'Ethiopia', 'Haiti', 'India', 'Sudan')
 
-# short term, extreme events
+# list data
+site_data <- list.files('../data/', full.names = T)
+site_data <- site_data[grepl('climate_metrics_', site_data)]
+
+# run loop to generate time series data for model input & analysis for all countries/climate regimes
 for(i in site_data){
-  x <- readRDS(i)
-  # print range of values
-  # cat(i, ':\nIntensity = ', max(x[['prob_ee_hist']]$Intensity), ', Duration = ', max(x[['prob_ee_hist']]$Duration), '\n')
-  if(grepl('precip', i)){
-    v1 = x[['hist_precip_metrics']]$rainy_days
-    v2 = x[['hist_precip_metrics']]$total_rainfall
-    v3 = NA
-    climVar = 'rainfall'
+  # read in data
+  df <- readRDS(i)
+  df <- df$base_metrics
+  
+  # name country
+  country <- gsub('../data/climate_metrics_|.RData', '', i)
+  
+  # determine seasonality 
+  if(country == 'Haiti'){
+    slength = 2
+  } else {
+    slength = 1
+  }
+  
+  # assign global conditions and function to translate climate into transmission rate
+  if(length(grep(country, wbd_countries))>0){
     mag = r.Magnitudes
     dur = r.Durations
-    newFileName <- gsub('precip_metrics_', 'ee_data/ee_wbd_', i)
+    betafun = Eisenberg_beta
   } else {
-    v1 = x[['hist_mean']]
-    v2 = x[['hist_amp']]
-    v3 = x[['hist_var']]
-    climVar = 'temperature'
     mag = t.Magnitudes
     dur = t.Durations
-    newFileName <- gsub('temp_metrics_', 'ee_data/ee_vbd_', i)
+    betafun = Lambrechts_beta
   }
+
+  # generate climate time series
   ee <- ee_list(
-    climType = climVar
-    , times = ee.times
+    x = df
+    , s = slength
+    , years = years
     , iter = Iterations
-    , var1 = v1
-    , var2 = v2
-    , var3 = v3
     , magnitudes = mag
     , durations = dur
     , timing = ExEV_times
@@ -56,17 +65,17 @@ for(i in site_data){
   # save start time of perturbation
   ee_start_times <- lapply(ee, function(x) x[[2]])
   ee_start_times <- ee_start_times[grepl('normal', names(ee_start_times))==F]
-  startFileName <- gsub('precip_metrics_|temp_metrics_', 'ee_start_time_', i)
+  startFileName <- gsub('climate_metrics_', 'ee_start_time_', i)
   saveRDS(ee_start_times, file = startFileName)
           
-  # save ee time series data
+  # save climate time series data
   ee2  <- lapply(ee[!grepl('normal', names(ee))], function(x) x[[1]])
   ee2 <- c(ee[grepl('normal', names(ee))], ee2)
-  saveRDS(ee2, file = newFileName)
+  climFileName <- paste0('../data/climate_ts_', country, '.RData')
+  saveRDS(ee2, file = climFileName)
+  
+  # translate climate time series to beta values
+  ee_betas <- lapply(ee2, function(x) betafun(x))
+  betaFileName <- paste0('../data/', country, '_beta_ts.RData')
+  saveRDS(ee_betas, file = betaFileName)
 }
-
-rm(ee)
-rm(ee.clim)
-rm(ee2)
-rm(ee_start_times)
-rm(x)

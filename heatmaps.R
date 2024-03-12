@@ -3,7 +3,7 @@ library(ggplot2)
 library(RColorBrewer)
 
 df <- readRDS('../data/ee_summary_all.RData')
-
+# df$magnitude
 
 # list of plots I want to make:
 # 1. heatmaps across countries/climate regimes (vbd = 6, wbd = 5)
@@ -14,7 +14,7 @@ time_window <- unique(df$timeWindow)
 metrics <- unique(df$Variable)
 ee_timing <- unique(df$ee_timing)
 
-savedir <- '../figures/heatmaps/'
+savedir <- '../figures/heatmaps2/'
 
 myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
 
@@ -47,11 +47,16 @@ powersummary <- df %>%
   group_by(diseaseSystem, region, ee_timing, timeWindow, Variable) %>%
   summarise(powerAbove80 = round(sum(Value > 0.80)/length(Value) * 100)) %>%
   filter(!(Variable %in% c('Return_time', 'CE_correlation', 'min_Re')))
-
-ggplot(test, aes(x = Variable, y = region, fill = powerAbove80)) +
-  geom_tile() +
+# should possibly be weighted by event count
+test <- subset(powersummary, timeWindow == 'short')
+test$xcombo <- paste(test$region, test$ee_timing, sep = '-')
+ggplot(test, aes(x = Variable, y = xcombo, fill = powerAbove80)) +
+  geom_tile(color = 'black') +
   scale_fill_gradientn(colours = myPalette(100), limits = c(0, 100)) +
-  facet_wrap(~ee_timing+timeWindow)
+  # facet_wrap(~ee_timing) +
+  xlab('') +
+  ylab('') +
+  theme_classic()
 
 
 powersummary$region_ee_timing <- factor(paste(powersummary$region, powersummary$ee_timing, sep = "_"))
@@ -135,3 +140,45 @@ ggplot(temp, aes(x = Intensity, y = Duration, fill = prob_diff)) +
   theme_bw() +
   facet_wrap(~country) #+
   xlim(0,100)
+  
+  
+  #### ----- exceedence heatmaps
+  source('functions_to_simulate_climate.R')
+  
+  exceedence <- function(minmean, maxmean, minamp, maxamp, stepsize){
+    clim_mean = seq(minmean, maxmean, stepsize)
+    clim_amp = seq(minamp, maxamp, stepsize)
+    clim_grid = data.frame(expand.grid('climate_mean' = clim_mean, 'climate_amp' = clim_amp))
+    
+    for(i in 1:nrow(clim_grid)){
+      s <- simulate_seasonal_climate(
+        xmin = (clim_grid$climate_mean[i] - clim_grid$climate_amp[i])
+        , xmax = (clim_grid$climate_mean[i] + clim_grid$climate_amp[i])
+        , xvar = 0
+        , seasons = 1
+        , years = 1 )
+      clim_grid$p90[i] <- quantile(s[s>0], 0.90)
+    }
+    return(clim_grid)  
+  }
+  
+  
+  T_grid <- exceedence(10, 35, 0, 15, 0.5)
+  
+  ggplot(T_grid, aes(x = climate_mean, y = climate_amp, fill = p90)) +
+    geom_tile() + # color = 'black'
+    scale_fill_gradientn(colours = myPalette(100), limits = c(10, 50)) +
+    xlab('Mean Temperature') +
+    ylab('Seasonal Variation (amplitude)') +
+    theme_classic()
+  
+  # need this think about what the mean and amplitude represent here
+  R_grid <- exceedence(5, 300, 0, 50, 1)
+  
+  ggplot(R_grid, aes(x = climate_mean, y = climate_amp, fill = p90)) +
+    geom_tile() + # color = 'black'
+    scale_fill_gradientn(colours = myPalette(400), limits = c(0, 400)) +
+    xlab('Mean Rainfall') +
+    ylab('Seasonal Variation (amplitude)') +
+    theme_classic()
+  

@@ -1,7 +1,7 @@
 source('filepaths.R')
 
 summaryFiles <- list.files('../data/results/', full.names = T)
-
+summaryFiles <- summaryFiles[grepl('short', summaryFiles)]
 
 # Load the tidyr package
 library(tidyverse)
@@ -72,11 +72,11 @@ for(i in summaryFiles){
   split_columns <- as.data.frame(str_split_fixed(df$Dataset, "_", n = Inf))
   
   df$magnitude <- split_columns$V1
-  df$magnitude <- gsub('C|mm', '', df$magnitude)
+  df$magnitude <- gsub('I', '', df$magnitude)
   df$magnitude <- as.numeric(df$magnitude)
   
   df$duration <- split_columns$V2
-  df$duration <- gsub('d', '', df$duration)
+  df$duration <- gsub('D', '', df$duration)
   df$duration <- as.numeric(df$duration)
   
   df$ee_timing <- split_columns$V3

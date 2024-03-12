@@ -1,6 +1,6 @@
 # Re calculations
-vbd_calc_Re <- function(x, gamma){
-  x$Re = x$beta * x$S / gamma
+vbd_calc_Re <- function(x, mu, gamma){
+  x$Re = x$beta * x$S / (mu + gamma)
   return(x)
 }
 
@@ -13,7 +13,7 @@ wbd_calc_Re <- function(x, beta1, mu, gamma){
 calc_return_time <- function(x, y){
   count = 0
   for (i in 1:length(x)) {
-    if (abs(x[i] - y[i]) / x[i] <= 0.001) {
+    if (abs(x[i] - y[i]) / x[i] <= 0.01) {
       count = count + 1
       if (count >= 7) {
         return(i - 6) # Return the starting point of synchronization
@@ -135,14 +135,14 @@ parallel_function <- function(country, model_type, window_length) {
 
   # calculate Re values
   if (model_type == 'vbd') {
-    df <- lapply(df, function(x) vbd_calc_Re(x, gamma = vbd.gamma))
+    df <- lapply(df, function(x) vbd_calc_Re(x, mu = mu, gamma = vbd.gamma))
   } else {
     df <- lapply(df, function(x) wbd_calc_Re(x, beta1 = wbd.beta1, mu = mu, gamma = wbd.gamma))
   }
   
   # separate into control and experiment lists
   data_list <- create_control_list(x = df)
-  fileNameStarts <- paste0(scratch_path, 'data/ee_start_time_', country, '.RData')
+  fileNameStarts <- paste0(scratch_path, 'data/ee_start_times/ee_start_time_', country, '.RData')
   startTimes <- readRDS(fileNameStarts)
   experiment_list <- create_experiments_list(x = df, start_times = startTimes)
   
@@ -162,6 +162,6 @@ parallel_function <- function(country, model_type, window_length) {
   } else {
     'short'
   }
-  saveName <- paste0(paste0(scratch_path, 'results/ee_sumarized_'), paste(model_type, country, windowname, sep='_'), '.RData')
+  saveName <- paste0(paste0(scratch_path, 'data/results/ee_sumarized_'), paste(model_type, country, windowname, sep='_'), '.RData')
   saveRDS(results_flattened, file = saveName)
 }

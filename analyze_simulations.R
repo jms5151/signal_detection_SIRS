@@ -27,7 +27,7 @@ vbd_param_combinations <- expand.grid(
 wbd_param_combinations <- expand.grid(
   country = wbd_countries,
   model_type = "wbd",
-  window_length = c(30, NA)
+  window_length = c(90, NA)
 )
 
 # Combine the parameter sets

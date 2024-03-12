@@ -9,7 +9,7 @@ t.Durations = seq(1, 40, 1) # 40
 r.Magnitudes = seq(5, 100, 5) # 100
 r.Durations = seq(1, 15, 1)  # 15
 ExEV_times = c('pre', 'peak', 'post')
-Iterations = 5
+Iterations = 50
 
 # extreme event occurs in second year of simulation
 t1 = 365

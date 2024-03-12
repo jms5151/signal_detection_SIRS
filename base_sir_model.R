@@ -36,6 +36,14 @@ Eisenberg_beta <- function(climate_var){
 years <- 3
 times <- seq(from = 1, to = 365 * years, by = 1)
 
+source('state_variables.R')
+source('parameter_values.R')
+source('functions_to_simulate_climate.R')
+
+x <- simulate_seasonal_climate(xmin = 0, xmax = 20, xvar = 3, seasons = 1, years = years)
+wbd_beta <- sapply(x, function(x) Eisenberg_beta(x))
+wbd_beta[wbd_beta<0] <- 0
+
 params <- list(
   gamma =  1 / 4 # recovery rate / inverse generation time
   , beta = rep(0.243, length(wbd_beta))
@@ -44,17 +52,17 @@ params <- list(
   , mu = 7*10e-04#1/(74*365)
 )
 
-params <- list(
-  gamma =  1 / 15 # recovery rate / inverse generation time
-  , beta = vbd_beta
-  , betaW = rep(0, length(times))
-  , eta = 0
-  , mu = 7*10e-04#1/(74*365)
-)
+# params <- list(
+#   gamma =  1 / 15 # recovery rate / inverse generation time
+#   , beta = vbd_beta
+#   , betaW = rep(0, length(times))
+#   , eta = 0
+#   , mu = 7*10e-04#1/(74*365)
+# )
 
 out <- as.data.frame(
   ode(
-    xstart
+    xstart = c(S = s, I = i, W = w, R = r)
     , times = times
     , sir_model
     , params

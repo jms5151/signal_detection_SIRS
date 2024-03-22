@@ -32,22 +32,37 @@ Eisenberg_beta <- function(climate_var){
   return(bW * climate_var)
 }
 
-# sampling times
-years <- 3
-times <- seq(from = 1, to = 365 * years, by = 1)
 
 source('state_variables.R')
 source('parameter_values.R')
 source('functions_to_simulate_climate.R')
 
-x <- simulate_seasonal_climate(xmin = 0, xmax = 20, xvar = 3, seasons = 1, years = years)
+# sampling times
+years <- 5
+times <- seq(from = 1, to = 365 * years, by = 1)
+
+x <- simulate_seasonal_climate(xmin = 0, xmax = 75, xvar = 0, seasons = 1, years = years)
 wbd_beta <- sapply(x, function(x) Eisenberg_beta(x))
 wbd_beta[wbd_beta<0] <- 0
+plot.ts(wbd_beta)
+
+exbeta <- generate_extreme_event(x, 0, 300, 100, 10, 'peak')
+exbeta2 <- sapply(exbeta[[1]], function(x) Eisenberg_beta(x))
+exbeta2[exbeta2<0] <- 0
+plot.ts(exbeta2)
 
 params <- list(
   gamma =  1 / 4 # recovery rate / inverse generation time
   , beta = rep(0.243, length(wbd_beta))
   , betaW = wbd_beta
+  , eta = 0.111
+  , mu = 7*10e-04#1/(74*365)
+)
+
+params <- list(
+  gamma =  1 / 4 # recovery rate / inverse generation time
+  , beta = rep(0.243, length(wbd_beta))
+  , betaW = exbeta2
   , eta = 0.111
   , mu = 7*10e-04#1/(74*365)
 )
@@ -62,7 +77,7 @@ params <- list(
 
 out <- as.data.frame(
   ode(
-    xstart = c(S = s, I = i, W = w, R = r)
+    y = c(S = s, I = i, W = w, R = r)
     , times = times
     , sir_model
     , params
@@ -70,6 +85,10 @@ out <- as.data.frame(
 )
 
 plot.ts(out$I)
-lines(out$I, col = 'blue')
-lines(out$I, col = 'purple')
-lines(out$I, col = 'orange')
+
+plot.ts(out2$I, col = 'lightblue')
+lines(out$I)
+
+plot.ts(out2$S)
+lines(out$S, col  = 'orange')
+hist(out$S)

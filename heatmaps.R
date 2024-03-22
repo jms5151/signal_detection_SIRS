@@ -145,7 +145,7 @@ ggplot(temp, aes(x = Intensity, y = Duration, fill = prob_diff)) +
   #### ----- exceedence heatmaps
   source('functions_to_simulate_climate.R')
   
-  exceedence <- function(minmean, maxmean, minamp, maxamp, stepsize){
+  exceedence <- function(minmean, maxmean, minamp, maxamp, stepsize, clim = 'notrain'){
     clim_mean = seq(minmean, maxmean, stepsize)
     clim_amp = seq(minamp, maxamp, stepsize)
     clim_grid = data.frame(expand.grid('climate_mean' = clim_mean, 'climate_amp' = clim_amp))
@@ -157,6 +157,9 @@ ggplot(temp, aes(x = Intensity, y = Duration, fill = prob_diff)) +
         , xvar = 0
         , seasons = 1
         , years = 1 )
+      if(clim == 'rain'){
+        s[s<0] <- 0
+      }
       clim_grid$p90[i] <- quantile(s[s>0], 0.90)
     }
     return(clim_grid)  
@@ -173,12 +176,17 @@ ggplot(temp, aes(x = Intensity, y = Duration, fill = prob_diff)) +
     theme_classic()
   
   # need this think about what the mean and amplitude represent here
-  R_grid <- exceedence(5, 300, 0, 50, 1)
+  R_grid <- exceedence(1, 100, 0, 50, 1, clim = 'rain')
   
   ggplot(R_grid, aes(x = climate_mean, y = climate_amp, fill = p90)) +
     geom_tile() + # color = 'black'
-    scale_fill_gradientn(colours = myPalette(400), limits = c(0, 400)) +
+    scale_fill_gradientn(colours = myPalette(200), limits = c(0, 200)) +
     xlab('Mean Rainfall') +
     ylab('Seasonal Variation (amplitude)') +
     theme_classic()
-  
+
+
+# values from 'far_and_rr_calculations.R'
+rain_values <- c(10, 35, 75)
+temp_values <- c(17, 23, 29)    
+rgridsub <- subset(R_grid, round(p90) == 35)  

@@ -13,4 +13,3 @@ Eisenberg_model <- function(t, state, params) {
     }
   )
 } 
-

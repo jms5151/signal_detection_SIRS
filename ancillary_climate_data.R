@@ -111,3 +111,81 @@ for(i in climate_data){
   countryName <- countries[sapply(countries, grepl, i)]
   saveRDS(x1, file = paste0('../data/climate_metrics_', countryName, '.RData'))
 }
+
+
+### wikipedia data
+library(tidyverse)
+
+wprecip <- read.csv('../data/wikipedia_precip.csv')
+wtemp <- read.csv('../data/wikipedia_temp.csv')
+wtemp <-wtemp[wtemp$Country != "",]
+
+# Step 1: Calculate Row-wise Min and Max
+add_monthly_values <- function(df){
+  df <- df %>%
+    rowwise() %>%
+    mutate(
+      Min_Month_Value = min(c_across(Jan:Dec), na.rm = TRUE),
+      Max_Month_Value = max(c_across(Jan:Dec), na.rm = TRUE),
+      Range = Max_Month_Value - Min_Month_Value
+    ) %>%
+    ungroup()
+  return(df)
+}
+
+# Step 2: Calculate 90th percentile values
+source('functions_to_simulate_climate.R')
+addp90 <- function(df, clim = 'notrain'){
+  df$p90 <- NA
+  for(i in 1:nrow(df)){
+    s <- simulate_seasonal_climate(
+      xmin = df$Min_Month_Value[i]
+      , xmax = df$Max_Month_Value[i]
+      , xvar = 0
+      , seasons = 1
+      , years = 1 )
+    if(clim == 'rain'){
+      s[s<0] <- 0
+    }
+    df$p90[i] <- round(quantile(s[s>0], 0.90))
+  }
+  return(df)  
+}
+
+wtemp <- add_monthly_values(df = wtemp)
+wtemp <- addp90(df = wtemp)
+
+wprecip <- add_monthly_values(df = wprecip)
+wprecip <- addp90(df = wprecip)
+
+plotSins <- function(df, colorName){
+  for(i in 1:nrow(df)){
+    s <- simulate_seasonal_climate(
+      xmin = df$Min_Month_Value[i]
+      , xmax = df$Max_Month_Value[i]
+      , xvar = 0
+      , seasons = 1
+      , years = 3 )
+    lines(s, col = colorName)
+  }
+}
+
+pdf('../figures/functional_forms/temperature.pdf', width = 8, height = 4)
+plot(0, type = 'l', ylim = c(-25,30), xlim = c(1,1000), xlab = 'Time (days)', ylab = 'Temperature (C)')
+t29 <- subset(wtemp, p90 == 29)
+plotSins(df = t29, 'darkred')
+t23 <- subset(wtemp, p90 == 23)
+plotSins(df = t23, 'red')
+t17 <- subset(wtemp, p90 == 17)
+plotSins(df = t17, 'orange')
+dev.off()
+
+pdf('../figures/functional_forms/rainfall.pdf', width = 8, height = 4)
+plot(0, type = 'l', ylim = c(0,400), xlim = c(1,1000), xlab = 'Time (days)', ylab = 'Rainfall (mm)')
+dry <- subset(wprecip, p90 > 75 & p90 < 85)
+plotSins(df = dry, 'brown')
+mod <- subset(wprecip, p90 > 140 & p90 < 150)
+plotSins(df = mod, 'lightblue')
+wet <- subset(wprecip, p90 > 340 & p90 < 350)
+plotSins(df = wet, 'blue')
+dev.off()

@@ -132,6 +132,9 @@ addvlines <- function(base_plot, values, value_labels, value_colors){
 }
 
 # base info
+rain_values <- c(80, 160, 340)#c(10, 35, 75)
+temp_values <- c(17, 23, 29) # quantiles: c(21, 25, 28)
+
 rvalue_labels <- c('Dry', 'Mod', 'Wet')
 rvalue_colors <- c('darkorange4', 'lightblue', 'blue')
 rainLegLabel <- 'Rainfall Regime'
@@ -147,22 +150,21 @@ rrseq <- seq(from = 0, to = 20, by = 0.5)
 farseq <- seq(from = 0, to = 0.99, by = 0.01)
 
 # figure directory
-figdir <- '../figures/'
+figdir <- '../figures/functional_forms/'
 
 # plot functional forms
 # WBD/rainfall
-rain_values <- c(10, 35, 75)
-rdf <- gen_base_plot_data(0, 300, 1, Eisenberg_beta)
+rdf <- gen_base_plot_data(0, 500, 1, Eisenberg_beta)
 rbase_plot <- baseplot(df = rdf, xvals = 'xseq', yvals = 'xbeta', xLabel = 'Rainfall', yLabel = 'Transmission rate')
 rplot <- addvlines(rbase_plot, values = rain_values, value_labels = rvalue_labels, value_colors = rvalue_colors)
-ggsave(filename = paste0(figdir, 'functional_forms/beta_rainfall.pdf'), plot = rplot)
+ggsave(filename = paste0(figdir, 'beta_rainfall.pdf'), plot = rplot)
 
 # VBD/temperature
-temp_values <- c(17, 23, 29)
 tdf <- gen_base_plot_data(10, 35, 0.1, Lambrechts_beta)
 tbase_plot <- baseplot(df = tdf, xvals = 'xseq', yvals = 'xbeta', xLabel = 'Temperature', yLabel = 'Transmission rate')
 tplot <- addvlines(tbase_plot, values = temp_values, value_labels = tvalue_labels, value_colors = tvalue_colors)
-ggsave(filename = paste0(figdir, 'functional_forms/beta_temperature.pdf'), plot = tplot)
+tplot <- tplot + ylim(0,1.2)
+ggsave(filename = paste0(figdir, 'beta_temperature.pdf'), plot = tplot)
 
 ## WBD/rainfall
 # FAR
@@ -196,31 +198,39 @@ far_plot_rain <- baseplot(df = rain_far, xvals = 'V1', yvals = 'metric'
                           , xLabel = 'Rainfall', yLabel = 'FAR'
                           , grouping = rain_far$rain_labels
                           , coloring = rain_far$rain_labels
-                          , colorName = rainLegLabel)
+                          # , colorName = rainLegLabel
+                          )
 far_plot_rain <- updatePlotColors(far_plot_rain, rvalue_colors)
-far_plot_rain <- far_plot_rain + xlim(0,300)
+far_plot_rain <- far_plot_rain + xlim(0,1000) + guides(color = 'none')
+ggsave(filename = paste0(figdir, 'far_rainfall.pdf'), plot = far_plot_rain)
 
 # RR plot
 rr_plot_rain <- baseplot(df = rain_rr_s, xvals = 'V1', yvals = 'metric'
                  , xLabel = 'Rainfall', yLabel = 'Relative Risk'
                  , grouping = rain_rr$rain_labels
                  , coloring = rain_rr$rain_labels
-                 , colorName = rainLegLabel)
-rr_plot_rain <- updatePlotColors(rr_plot_rain, rvalue_colors)
+                 # , colorName = rainLegLabel
+                 )
+rr_plot_rain <- updatePlotColors(rr_plot_rain, rvalue_colors) + guides(color = 'none') + xlim(0,2000) + geom_hline(yintercept = 1, col = 'grey')
+ggsave(filename = paste0(figdir, 'rr_rainfall.pdf'), plot = rr_plot_rain)
 
 # Susceptibility plot
 suscep_rain <- baseplot(df = rain_rr_long
-                        , xvals = 'Re', yvals = 'metric'
-                        , xLabel = 'Re', yLabel = 'Fold-change in\ntransmission rate'
+                        , xvals = 'metric', yvals = 'Re'
+                        , xLabel = 'Fold-change in transmission rate', yLabel = 'Re'
                         , grouping = interaction(rain_rr_long$rain_labels, rain_rr_long$variable)
                         , coloring = rain_rr_long$rain_labels
                         , lineType = rain_rr_long$variable
-                        , colorName = rainLegLabel
+                        # , colorName = rainLegLabel
                         , linetypeName = 'Susceptibility')
 
 suscep_rain <- suscep_rain + 
-  geom_vline(xintercept = 1, col = 'grey') +
-  scale_color_manual(values = rvalue_colors) 
+  geom_hline(yintercept = 1, col = 'grey') +
+  scale_color_manual(values = rvalue_colors) + 
+  guides(color = 'none') +
+  theme(legend.position = c(0.2, 0.8))
+
+ggsave(filename = paste0(figdir, 'susceptibility_rainfall.pdf'), plot = suscep_rain)
 
 
 ## VBD/temperature
@@ -257,32 +267,38 @@ temp_rr_s_long <- temp_rr_s %>%
 
 ## Plots
 # FAR plot
-temp_far_plot <- baseplot(df = temp_far_long
+far_plot_temp <- baseplot(df = temp_far_long
                           , xvals = 'V1'
                           , yvals = 'metric'
                           , grouping = interaction(temp_far_long$temp_labels, temp_far_long$variable)
                           , coloring = temp_far_long$temp_labels
                           , xLabel = 'Temperature'
                           , yLabel = 'FAR'
-                          , colorName = tempLegLabel)
-temp_far_plot <- temp_far_plot + scale_color_manual(values = tvalue_colors)
+                          # , colorName = tempLegLabel
+                          )
+far_plot_temp <- far_plot_temp + scale_color_manual(values = tvalue_colors) + guides(color = 'none')
+
+ggsave(filename = paste0(figdir, 'far_temp.pdf'), plot = far_plot_temp)
 
 
 # RR plot
-temp_rr_plot <- baseplot(df = temp_rr_long
+rr_plot_temp <- baseplot(df = temp_rr_long
                           , xvals = 'V1'
                           , yvals = 'metric'
                           , grouping = interaction(temp_rr_long$temp_labels, temp_rr_long$variable)
                           , coloring = temp_rr_long$temp_labels
                           , xLabel = 'Temperature'
                           , yLabel = 'Relative Risk'
-                          , colorName = tempLegLabel)
-temp_rr_plot <- temp_rr_plot + scale_color_manual(values = tvalue_colors) + ylim(0,10)
+                          # , colorName = tempLegLabel
+                         )
+rr_plot_temp <- rr_plot_temp + scale_color_manual(values = tvalue_colors) + ylim(0,10) + guides(color = 'none') + geom_hline(yintercept = 1, col = 'grey')
+
+ggsave(filename = paste0(figdir, 'rr_temp.pdf'), plot = rr_plot_temp)
 
 # Susceptibility plot
 suscep_temp <- baseplot(df = temp_rr_s_long
-                        , xvals = 'Re', yvals = 'metric'
-                        , xLabel = 'Re', yLabel = 'Fold-change in\ntransmission rate'
+                        , xvals = 'metric', yvals = 'Re'
+                        , xLabel = 'Fold-change in transmission rate', yLabel = 'Re'
                         , grouping = interaction(temp_rr_s_long$temp_labels, temp_rr_s_long$variable2)
                         , coloring = temp_rr_s_long$temp_labels
                         , lineType = temp_rr_s_long$variable2
@@ -290,11 +306,22 @@ suscep_temp <- baseplot(df = temp_rr_s_long
                         , linetypeName = 'Susceptibility')
 
 suscep_temp <- suscep_temp + 
-  geom_vline(xintercept = 1, col = 'grey') +
-  scale_color_manual(values = tvalue_colors) +
-  ylim(0,10)
+  geom_hline(yintercept = 1, col = 'grey') +
+  scale_color_manual(values = tvalue_colors) + 
+  guides(color = 'none') +
+  xlim(0,10) +
+  labs(color = NULL) +
+  theme(legend.position = c(.8,.45))
 
 
+ggsave(filename = paste0(figdir, 'susceptibility_temp.pdf'), plot = suscep_temp)
+
+library(ggpubr)
+analytical_plots <-ggarrange(rplot, far_plot_rain, rr_plot_rain, suscep_rain,
+          tplot, far_plot_temp, rr_plot_temp, suscep_temp, 
+          ncol = 4, nrow = 2)
+
+ggsave(filename = paste0(figdir, 'multiplot.pdf'), plot = analytical_plots, width = 17, height = 7)
 # # add classification
 # probs$classification <- ifelse(round(probs$hist_prob, 2) >= 0.85 & round(probs$hist_prob, 2) <= 1.15, '1-yr event', NA)
 # probs$classification[round(probs$hist_prob, 1) == 0.2] <- '5-yr event'

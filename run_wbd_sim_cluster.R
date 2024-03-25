@@ -7,7 +7,6 @@ source('Eisenberg_model.R')
 
 # source functions to run models
 source('function_to_run_parallel_ode.R')
-source('functions_to_calculate_beta.R')
 
 # time span
 source('time_spans.R')
@@ -21,7 +20,7 @@ wbd.start <- c(S = s, I = i, W = w, R = r)
 # Run models
 args = commandArgs(trailingOnly = TRUE)
 
-inputFilePath <- paste0(scratch_path, 'data/', args, '_beta_ts.RData')
+inputFilePath <- paste0(scratch_path, 'data/', args, '_betas.RData')
 INPUT <- readRDS(inputFilePath)
 
 # Extreme event simulations
@@ -29,5 +28,5 @@ INPUT <- readRDS(inputFilePath)
 OUTPUT <- runParallelODE(INPUT, wbd.start, ee.times, model_function = Eisenberg_model, wbd.params)
 
 # save results
-outputFilePath <- paste0(scratch_path, 'results/ee_wbd_', args, '.RData')
+outputFilePath <- paste0(scratch_path, 'results/', args, '.RData')
 saveRDS(OUTPUT, file = outputFilePath)

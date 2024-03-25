@@ -3,7 +3,7 @@ library(foreach)
 
 runParallelODE <- function(beta_list, xstart, times, model_function, params) {
   # Set up parallel processing with doParallel on PC
-  cl <- makeCluster(3) # detectCores()
+  # cl <- makeCluster(3) # detectCores()
   # for cluster, needs to match #SBATCH cpus per task
   # cl <- makeCluster(detectCores(25))
   registerDoParallel(cl)

@@ -97,7 +97,7 @@ sim_by_row <- function(df, clim = 'notrain') {
       xmax = df$Max_Month_Value[i],
       xvar = 0,
       seasons = 1,
-      years = 1
+      years = Yrs
     )
     if(clim == 'rain'){
       s[s<0] <- 0

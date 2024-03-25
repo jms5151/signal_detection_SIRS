@@ -37,18 +37,18 @@ addp90 <- function(df, clim = 'notrain'){
     }
     df$p90[i] <- round(quantile(s[s>0], 0.90))
   }
-  return(df)  
+  return(as.data.frame(df))  
 }
 
-# run on temperature data
+# appy to temperature data
 wtemp <- add_monthly_values(df = wtemp)
 wtemp <- addp90(df = wtemp)
 
-# run on precipitation data
+# appy to precipatation data
 wprecip <- add_monthly_values(df = wprecip)
 wprecip <- addp90(df = wprecip)
 
-# subset
+# subset data
 t29 <- subset(wtemp, p90 == 29)
 t23 <- subset(wtemp, p90 == 23)
 t17 <- subset(wtemp, p90 == 17)

@@ -25,6 +25,7 @@ add_monthly_values <- function(df){
 # Calculate 90th percentile values based on sin waves
 addp90 <- function(df, clim = 'notrain'){
   df$p90 <- NA
+  df$p10 <- NA
   for(i in 1:nrow(df)){
     s <- simulate_seasonal_climate(
       xmin = df$Min_Month_Value[i]
@@ -35,7 +36,8 @@ addp90 <- function(df, clim = 'notrain'){
     if(clim == 'rain'){
       s[s<0] <- 0
     }
-    df$p90[i] <- round(quantile(s[s>0], 0.90))
+    df$p90[i] <- round(quantile(s, 0.90))
+    df$p10[i] <- round(quantile(s, 0.10))
   }
   return(as.data.frame(df))  
 }
@@ -58,18 +60,18 @@ mod <- subset(wprecip, p90 > 150 & p90 < 170)
 wet <- subset(wprecip, p90 > 330 & p90 < 350)
 
 # plot data
-# plotSins <- function(df, colorName){
-#   for(i in 1:nrow(df)){
-#     s <- simulate_seasonal_climate(
-#       xmin = df$Min_Month_Value[i]
-#       , xmax = df$Max_Month_Value[i]
-#       , xvar = 0
-#       , seasons = 1
-#       , years = 3 )
-#     lines(s, col = colorName)
-#   }
-# }
-# 
+plotSins <- function(df, colorName){
+  for(i in 1:nrow(df)){
+    s <- simulate_seasonal_climate(
+      xmin = df$Min_Month_Value[i]
+      , xmax = df$Max_Month_Value[i]
+      , xvar = 0
+      , seasons = 1
+      , years = 3 )
+    lines(s, col = colorName)
+  }
+}
+
 # pdf('../figures/functional_forms/temperature.pdf', width = 8, height = 4)
 # plot(0, type = 'l', ylim = c(-25,30), xlim = c(1,1000), xlab = 'Time (days)', ylab = 'Temperature (C)')
 # plotSins(df = t29, 'darkred')

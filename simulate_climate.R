@@ -137,3 +137,52 @@ saveRDS(dry_list, paste0(savedir, 'normal_dry_clim.RData'))
 saveRDS(moderate_list, paste0(savedir, 'normal_moderate_clim.RData'))
 saveRDS(wet_list, paste0(savedir, 'normal_wet_clim.RData'))
 
+### simulate extreme events
+t.Magnitudes = c(seq(-10, -1, 1), seq(1, 10, 1)) # -10 to 10 excluding 0
+t.Durations = seq(1, 30, 1)
+r.Magnitudes = seq(10, 300, 10)
+r.Durations = seq(1, 14, 1) 
+
+normaldir <- '../data/sim_climate/'
+cfilepaths <- list.files(normaldir, full.names = T)
+
+susceptdir <- '../data/sim_sids/'
+sfilepaths <- list.files(susceptdir, full.names = T)
+
+savedir <- '../data/sim_climate_ee/'
+
+for(i in 1:length(normaldir)){
+  c <- readRDS(cfilepaths[i])
+  s <- readRDS(sfilepaths[i])
+  
+}
+
+
+
+# Example lists of lists
+list1 <- list(
+  sublist1 = list(a = 1, b = 2, c = 3),
+  sublist2 = list(a = 4, b = 5, c = 6),
+  sublist3 = list(a = 7, b = 8, c = 9)
+)
+
+list2 <- list(
+  sublist1 = list(x = 10, y = 20, z = 30),
+  sublist2 = list(x = 40, y = 50, z = 60),
+  sublist3 = list(x = 70, y = 80, z = 90)
+)
+
+# Define a function to perform calculation
+calculate <- function(value, sublist) {
+  result <- sublist * value
+  return(result)
+}
+
+# Apply the function to each sublist pair
+result <- Map(calculate, unlist(list1, recursive = FALSE), unlist(list2, recursive = FALSE))
+
+# Convert the result back to list of lists
+result_list <- lapply(result, function(x) split(x, rep(names(list1), lengths(list1))))
+
+# Print the result
+print(result_list)

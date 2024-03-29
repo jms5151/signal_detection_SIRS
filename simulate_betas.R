@@ -4,7 +4,10 @@
 source('functions_to_calculate_beta.R')
 
 # filepaths
+# normal climate paths
 sourcedir <- '../data/sim_climate/'
+# extreme climate paths
+# sourcedir <- '../data/sim_climate_ee/'
 
 # list names of climate lists
 clim_files <- list.files(sourcedir, full.names = T)
@@ -20,4 +23,3 @@ for(i in clim_files){
   newfilepath <- gsub('climate|clim', 'betas', i)
   saveRDS(x_beta, file = newfilepath)
 }
-

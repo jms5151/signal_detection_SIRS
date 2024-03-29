@@ -24,14 +24,18 @@ source('simulate_betas.R')
 source('identify_time_points_of_diff_susceptibility.R')
 
 # Step 8: create 'extreme event' climate time series
+source('simulate_climate_extremes.R')
 
 # Step 9: create 'extreme event' time series of betas from extreme event climate time series
+# use second source directory
+source('simulate_betas.R')
 
 # Step 10: run model with extreme event beta time series
 # This step is done on the cluster using 'run_vbd_sim_cluster.R' and 'run_wbd_sim_cluster.R'
 # visual inspection of results in 'plot_time_series.R'
 
 # Step 11: calculate summary metrics for model runs (i.e., beta time series)
+source('analyze_simulations.R')
 
 # Step 12: conduct power analysis to statistically compare normal and extreme event time series
 

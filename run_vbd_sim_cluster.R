@@ -25,6 +25,7 @@ INPUT <- readRDS(inputFilePath)
 
 # Extreme event simulations
 #OUTPUT <- print(inputFilePath)
+INPUT <- readRDS(inputFilePath)
 OUTPUT <- runParallelODE(INPUT, vbd.start, ee.times, model_function = Lambrechts_model, vbd.params)
 
 # save results

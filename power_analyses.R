@@ -3,7 +3,7 @@ library(tidyr)
 library(pwrss)
 
 # read in file
-x <- readRDS('../data/long_summary.RData')
+x <- readRDS('../data/sim_summaries/long_summary.RData')
 
 # function to calculate power
 calc_power <- function(mean1, mean2, sd1, sd2, n1, n2){
@@ -43,6 +43,29 @@ reorganized_data$power <- mapply(calc_power,
                                  , reorganized_data$n_control
                                  , reorganized_data$n_experiment)
 
-# save
-saveRDS(reorganized_data, file = '../data/power_summary.RData')
+# add some useful labels
+reorganized_data$suscept <- gsub('_t.*', '', reorganized_data$filename)
+reorganized_data$type <- ifelse(grepl('multi', reorganized_data$filename)==T, 'multiplicative', 'additive')
+reorganized_data$regime <- gsub('.*_t_', '', reorganized_data$filename)
+reorganized_data$regime <- gsub('multi_', '', reorganized_data$regime)
+reorganized_data$intensity <- gsub('_.*', '', reorganized_data$ee)
+reorganized_data$intensity <- gsub('I', '', reorganized_data$intensity)
+reorganized_data$intensity <- gsub('neg', '-', reorganized_data$intensity)
+reorganized_data$intensity <- as.numeric(reorganized_data$intensity)
+reorganized_data$duration <- gsub('.*_', '', reorganized_data$ee)
+reorganized_data$duration <- gsub('D', '', reorganized_data$duration)
+reorganized_data$duration <- as.numeric(reorganized_data$duration)
 
+# save
+saveRDS(reorganized_data, file = '../data/sim_summaries/power_summary.RData')
+
+# reorganize to determine most robust metric
+highest_power <- reorganized_data %>%
+  group_by(filename, ee) %>%
+  top_n(1, power) %>%
+  # select(filename, ee, metric, power)
+  select(filename, ee, suscept, regime, type, intensity, duration, metric, power) %>%
+  as.data.frame()
+
+# save
+saveRDS(highest_power, file = '../data/sim_summaries/highest_power_summary.RData')

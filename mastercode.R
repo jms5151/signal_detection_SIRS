@@ -35,9 +35,11 @@ source('simulate_betas.R')
 # visual inspection of results in 'plot_time_series.R'
 
 # Step 11: calculate summary metrics for model runs (i.e., beta time series)
+# ran this step on the cluster, but don't need to
 source('analyze_simulations.R')
 
 # Step 12: conduct power analysis to statistically compare normal and extreme event time series
+source('power_analyses.R')
 
 # Step 13: create heatmaps of power analyses
 source('heatmaps.R')

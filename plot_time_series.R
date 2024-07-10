@@ -61,3 +61,13 @@ for(i in vbdfiles){
 }
 dev.off()
 
+# plot normal vs ee simulations for moderate climate regime
+n <- readRDS('../data/sim_results/normal_warm.RData')
+ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_warm.RData')
+ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_warm.RData')
+
+plot.ts(n$normal_warm_1$I, ylab = 'Infected', lwd = 2, main = 'High susceptibility')
+lines(ee_Smax$warm_1_10I_7D$I, col = 'red', lwd = 2)
+
+plot.ts(n$normal_warm_1$I, ylab = 'Infected', lwd = 2, main = 'Low susceptibility')
+lines(ee_Smin$warm_1_10I_7D$I, col = 'red', lwd = 2, lty = 2)

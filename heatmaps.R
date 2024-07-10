@@ -30,3 +30,25 @@ makeheatmaps <- function(dfx, climvar){
 makeheatmaps(dfx = rain_add, climvar = 'rain')
 makeheatmaps(dfx = rain_multi, climvar = 'rain_multi')
 makeheatmaps(dfx = temp, climvar = 'temp')
+
+# create heatmaps of most robust metrics
+dfpow <- readRDS('../data/sim_summaries/highest_power_summary.RData')
+
+prain <- subset(dfpow, regime == 'dry' | regime == 'moderate' | regime == 'wet')
+prain_add <- subset(prain, type == 'additive')
+prain_multi <- subset(prain, type == 'multiplicative')
+ptemp <- subset(dfpow, regime == 'temperate' | regime == 'warm' | regime == 'hot')
+
+makerobustheatmap <- function(dfx, climvar){
+  p <- ggplot(dfx, aes(x = intensity, y = duration, fill = metric)) +
+    geom_tile() +
+    theme_bw() +
+    facet_grid(suscept~regime, scales = 'free')
+  savedir <- '../figures/heatmaps_regimes/'
+  filePath <- paste0(savedir, climvar, '_robust', '.pdf')
+  ggsave(p, file = filePath, width = 10, height = 6.5) 
+}
+
+makerobustheatmap(dfx = prain_add, climvar = 'rain')
+makerobustheatmap(dfx = prain_multi, climvar = 'rain_multi')
+makerobustheatmap(dfx = temp, climvar = 'temp')

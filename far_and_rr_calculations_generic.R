@@ -35,7 +35,6 @@ normalize_function <- function(func, x_range, ...) {
   return(normalized_y)
 }
 
-
 # Define the x range
 x_range <- seq(1, 20, length.out = 100)
 
@@ -59,21 +58,7 @@ vline_data <- data.frame(
   lineType = rep(c('solid', 'dashed', 'dotted'), length(unique(df_all$func)))
 )
 
-value_colors <- c('low' = '#7A5A4F', 'mod' = '#f4c430', 'high' = 'darkred')
-
-# Plot all functions
-functions_plot <- ggplot(df_all, aes(x = x, y = y)) +
-  geom_line(linewidth = 1) +
-  facet_wrap(~func, nrow = 1) + # 
-  labs(title = 'Transmission function',
-       x = '',
-       y = 'Normalized Y') +
-  geom_vline(data = vline_data, aes(xintercept = xintercept, col = colType)) +
-  # geom_vline(xintercept = c(5, 10, 15), linetype = 'dashed') +
-  theme_classic(base_size = 14) +
-  scale_color_manual(values = value_colors) + 
-  guides(color = 'none')
-
+# detection and attribution
 far_range <- seq(0, 1, 0.01)
 rr_range <- seq(1, 10, 0.10)
 
@@ -119,6 +104,13 @@ create_ad_df <- function(xp0, trans_fun, ad_fun){
   return(df)
 }
 
+Re_calc <- function(beta, S, gamma = 0.067){ # gamma = 0.25
+  Re = (beta / gamma) * S
+  Re[Re<0] <- 0
+  Re[!is.finite(Re)] <- 0
+  return(Re)
+}
+
 function_names = rep(c(exponential_decay_function, exponential_growth_function, linear_function, linear_function = function(x){linear_function(x = x, a = -0.1)}, michaelis_menten, modified_briere, quadratic_function), each = 3)
 
 data <- data.frame()
@@ -135,87 +127,94 @@ for(i in 1:nrow(vline_data)){
       range_vals = rr_range
     }
     df <- create_ad_df(xp0 = vline_data$xintercept[i], trans_fun = function_names[[i]], ad_fun = p1_fun)
+    # add id information
     df$variable <- p1name
     df$variable_value <- range_vals
     df$function_name <- vline_data$func[i]
     df$colType <- vline_data$colType[i]
+    # add Re
+    df$Low <- Re_calc(beta = df$p1, S = 0.2)
+    df$High <- Re_calc(beta = df$p1, S = 0.8)
     data <- rbind(data, df)
   }
 }
 
-# format and plot
+# format far and rr data
 long_data <- data %>%
   pivot_longer(cols = c(X1, X2), names_to = 'root', values_to = 'root_value') %>%
   as.data.frame()
 
 long_data$Xp0 <- as.character(long_data$Xp0)
 
+# plotting functions
+# value_colors <- c('low' = '#7A5A4F', 'mod' = '#f4c430', 'high' = 'red')
+value_colors <- c('low' = 'darkorange4', 'mod' = 'lightblue', 'high' = 'blue')
+
 plot_ad <- function(df, yLabel){
   p <- ggplot(df, aes(x = root_value, y = variable_value, group = interaction(root, colType), color = colType)) +
-  geom_line(size = 1.1) +
-  theme_classic(base_size = 14) +
-  facet_wrap(~function_name, nrow = 1) + 
-  scale_color_manual(values = value_colors) + 
-  guides(color = 'none') +
-  xlab('') +
-  ylab(yLabel) +
+    geom_line(size = 1.1) +
+    theme_light(base_size = 14) +
+    facet_wrap(~function_name, nrow = 1) + 
+    scale_color_manual(values = value_colors) + 
+    guides(color = 'none') +
+    xlab('') +
+    ylab(yLabel) +
     theme(
       strip.background = element_blank(),
       strip.text.x = element_blank()
     )
   return(p)
 }
-  
-df_far = subset(long_data, variable == 'FAR')
-far_plot <- plot_ad(df = df_far, yLabel = 'FAR')
 
-df_rr = subset(long_data, variable == 'RR')
-rr_plot <- plot_ad(df = df_rr, yLabel = 'RR') + xlab('X')
-
-
-# susceptibility plots
-Re_calc <- function(beta, S, gamma = 0.1){ # gamma = 0.25
-  Re = (beta / gamma) * S
-  return(Re)
-}
-
-generic_sapply <- function(metric, calcfun, ...){
-  xx <- sapply(metric, function(x) calcfun(x, ...))
-  return(xx)
-}
-
-add_re_by_s <- function(df){
-  df$Low <- generic_sapply(df$p1, Re_calc, S = 0.2)
-  df$High <- generic_sapply(df$p1, Re_calc, S = 0.8)
-  df$Low[df$Low<0] <- 0
-  df$High[df$High<0] <- 0
-  return(df)
-}
-
-df_s <- add_re_by_s(df = df_far) # shouldn't matter if using df_far or df_rr
-rr_s_long <- df_s %>%
-  pivot_longer(cols = c(Low, High), names_to = "variable2", values_to = "Re") %>%
+# format susceptibility data
+long_data_s <- data %>%
+  filter(variable == 'RR') %>%
+  pivot_longer(cols = c(Low, High), names_to = 'Susceptibility', values_to = 'Re') %>%
   as.data.frame()
 
-ggplot(rr_s_long, aes(x = root_value, y = Re, group = interaction(colType, variable2), color = colType, linetype =  variable2)) +
+suscept_plot <- ggplot(long_data_s, aes(x = variable_value, y = Re, group = interaction(colType, Susceptibility), color = colType, linetype =  Susceptibility)) +
   geom_line(size = 1.1) +
-  theme_classic(base_size = 14) +
+  theme_light(base_size = 14) +
   facet_wrap(~function_name, nrow = 1) + 
   scale_color_manual(values = value_colors) + 
   guides(color = 'none') +
-  xlab('') +
+  xlab('Fold-change in transmission rate') +
   ylab('Re') +
   labs(color = NULL) +
   geom_hline(yintercept = 1, col = 'grey') +
-  theme(legend.position = c(.1,.75)) +
-  ylim(0,10)  +
+  theme(legend.position = c(.92,.7)) +
+  ylim(0,20) +
   theme(
     strip.background = element_blank(),
     strip.text.x = element_blank()
   )
 
+# Plots
+functions_plot <- ggplot(df_all, aes(x = x, y = y)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~func, nrow = 1) + # 
+  labs(title = 'Transmission function',
+       x = '',
+       y = 'Normalized Y') +
+  geom_vline(data = vline_data, aes(xintercept = xintercept, col = colType)) +
+  # geom_vline(xintercept = c(5, 10, 15), linetype = 'dashed') +
+  theme_light(base_size = 14) +
+  scale_color_manual(values = value_colors) + 
+  guides(color = 'none')
+
+
+df_far = subset(long_data, variable == 'FAR')
+far_plot <- plot_ad(df = df_far, yLabel = 'FAR')
+
+
+df_rr = subset(long_data, variable == 'RR')
+rr_plot <- plot_ad(df = df_rr, yLabel = 'RR') + xlab('X')
+
 # plot together 
 library(ggpubr)
 
-ggarrange(functions_plot, far_plot, rr_plot, ncol = 1)
-# labs(color = colorName, linetype = linetypeName)
+multiplot_generic <- ggarrange(functions_plot, far_plot, rr_plot, ncol = 1)
+ggsave(filename = '../figures/functional_forms/multiplot_generic.pdf', plot = multiplot_generic, width = 12, height = 7)
+
+multiplot_generic_with_S <- ggarrange(functions_plot, far_plot, rr_plot, suscept_plot, ncol = 1)
+ggsave(filename = '../figures/functional_forms/multiplot_generic_with_susceptibility.pdf', plot = multiplot_generic_with_S, width = 12, height = 7.5)

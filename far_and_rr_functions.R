@@ -19,6 +19,11 @@ normalize_function <- function(func, x_range, ...) {
   return(normalized_y)
 }
 
+normalize_y <- function(func, y_values, min_y, max_y){
+  normalized_y <- (y_values - min_y) / (max_y - min_y) * 1.25
+  return(normalized_y)
+}
+
 # back-calculate x given y (corresponding to FAR and RR ys (e.g., p1s)
 find_all_x_for_y <- function(f, y, interval = c(-10, 10), tol = .Machine$double.eps^0.25) {
   root_function <- function(x) f(x) - y

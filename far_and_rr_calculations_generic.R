@@ -11,11 +11,8 @@ source('transmission_functions.R')
 # source functions for calculating attribution and detection metrics
 source('far_and_rr_functions.R')
 
-# functions to plot FAR and RR relationships
-source('far_and_rr_plotting_functions.R')
-
 # calculate generic R-effective
-Re_calc <- function(beta, S, gamma = 0.67){ 
+Re_calc <- function(beta, S, gamma = 0.25){ 
   Re = (beta / gamma) * S
   Re[Re < 0] <- 0
   Re[!is.finite(Re)] <- 0
@@ -95,8 +92,9 @@ for(i in 1:nrow(threshold_data)){
     df$function_name <- threshold_data$func[i]
     df$threshold_level <- threshold_data$threshold_level[i]
     # add Re
-    df$Low <- Re_calc(beta = df$p1, S = s_low)
-    df$High <- Re_calc(beta = df$p1, S = s_high)
+    normalized_ys <- normalize_y(func = function_names[[i]], y_values = df$p1, min_y = min(function_names[[i]](x_range)), max_y = max(function_names[[i]](x_range)))
+    df$Low <- Re_calc(beta = normalized_ys, S = s_low)
+    df$High <- Re_calc(beta = normalized_ys, S = s_high)
     data <- rbind(data, df)
   }
 }
@@ -152,8 +150,8 @@ suscept_plot <- ggplot(long_data_s, aes(x = variable_value, y = Re, group = inte
   ylab('Re') +
   labs(color = NULL) +
   geom_hline(yintercept = 1, col = 'grey') +
-  theme(legend.position = c(.92,.7)) +
-  ylim(0,20) +
+  theme(legend.position = c(.055,.68), legend.background = element_rect(fill='transparent')) +
+  # ylim(0,10) +
   theme(
     strip.background = element_blank(),
     strip.text.x = element_blank()
@@ -164,4 +162,4 @@ multiplot_generic <- ggarrange(functions_plot, far_plot, rr_plot, ncol = 1)
 ggsave(filename = '../figures/functional_forms/multiplot_generic.pdf', plot = multiplot_generic, width = 12, height = 7)
 
 multiplot_generic_with_S <- ggarrange(functions_plot, far_plot, rr_plot, suscept_plot, ncol = 1)
-ggsave(filename = '../figures/functional_forms/multiplot_generic_with_susceptibility.pdf', plot = multiplot_generic_with_S, width = 12, height = 7.5)
+ggsave(filename = '../figures/functional_forms/multiplot_generic_with_susceptibility.pdf', plot = multiplot_generic_with_S, width = 12, height = 8.5)

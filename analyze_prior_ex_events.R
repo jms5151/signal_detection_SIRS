@@ -1,15 +1,21 @@
 # load packages
 library(tidyverse)
+library(ggplot2)
 
 # load extreme event data from scoping review
 csid <- read.csv('../CSID_scoping_review_SI_edited.csv')
 csid$City <- paste(csid$Study.Area, csid$Country, sep = ', ')
 
+# load agreement/evidence from scoping review
+ae <- read.csv('../CSID_Agr_Evid.csv')
+
 # load Koppen names for each event
 koppen <- read.csv('../EE_Koppen_filled.csv')
 
 # join data
-csid2 <- csid %>% left_join(koppen)
+csid2 <- csid %>%
+  left_join(ae) %>%
+  left_join(koppen)
 
 # format dates
 csid2[,c('Date_start', 'Date_end', 'Date_peak')] <- lapply(csid2[,c('Date_start', 'Date_end', 'Date_peak')], function(x) as.Date(x, '%m/%d/%Y'))
@@ -35,12 +41,107 @@ for(i in 1:nrow(csid2)){
   }
 }
 
+
+# average across studies
+x <- csid2 %>%
+  group_by(ID, City, lon, lat, Disease, Climate_variable, Outbreak_risk, Extreme_climate_event, Koppen_Name, Agreement, Evidence) %>%
+  summarise(Percentile = median(Percentile))
+
+# ggplot(x, aes(x = Extreme_climate_event, y = Percentile, color = Agreement, shape = Evidence)) +
+#   geom_jitter(width = 0.2, size = 3) +
+#   theme_minimal() +
+#   labs(title = "Scatter Plot of Continuous Data by Category",
+#        x = 'Koppen climate regime',
+#        y = 'Extreme event percentile',
+#        color = 'Agreement among studies',
+#        shape = 'Evidence')
+
+
+x$Outbreak_risk <- gsub('No.*', 'No', x$Outbreak_risk)
+x$Outbreak_risk <- gsub('Yes/Mixed', 'Mixed', x$Outbreak_risk)
+x$Outbreak_risk <- gsub('Yes.*', 'Yes', x$Outbreak_risk)
+
+x$Koppen_Name[x$City == 'Nationwide, Singapore'] <- 'Af'
+x$Koppen_Name[x$City == 'Nationwide, Brazil'] <- 'Aw' # based on Mato Grosso do Sul where dengue is high
+
+x$Disease <- gsub('Malaria.*', 'Malaria', x$Disease)
+
+# ggplot(x, aes(x = Koppen_Name, y = Percentile, color = Outbreak_risk)) +
+#   geom_jitter(width = 0.2, size = 3) +
+#   theme_minimal() +
+#   labs(title = "Scatter Plot of Continuous Data by Category",
+#        x = 'Koppen climate regime',
+#        y = 'Extreme event percentile',
+#        color = 'Outbreak')
+# 
+
+x$Koppen_Group <- gsub('A.*', 'Tropical', x$Koppen_Name)
+x$Koppen_Group <- gsub('B.*', 'Dry', x$Koppen_Group)
+x$Koppen_Group <- gsub('C.*', 'Temperate', x$Koppen_Group)
+x$Koppen_Group <- gsub('D.*', 'Continental', x$Koppen_Group)
+
+x$Koppen_Subgroup <- gsub('Af', 'Rainforest', x$Koppen_Name)
+x$Koppen_Subgroup <- gsub('Am', 'Monsoon', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('As', 'Savanna,\n dry summer', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('Aw', 'Savanna,\n dry winter', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('BSh', 'Semi-Arid\n Steppe, Hot', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('BWh', 'Arid Desert,\n Hot', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('BWh', 'Arid Desert,\n Hot', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('Cfa', 'No dry season,\n Hot summer', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('Cwa', 'Dry winter,\n Hot summer', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('Dfa', 'No dry season,\n Hot summer', x$Koppen_Subgroup)
+x$Koppen_Subgroup <- gsub('Dfb', 'No dry season,\n Warm summer', x$Koppen_Subgroup)
+
+x$Extreme_climate_event[x$Extreme_climate_event == 'Cyclone/Hurricane/Typhoon'] <- 'Cyclone/\nHurricane/Typhoon'
+
 # save
-csid2$Extreme_event <- csid2$Extreme.climate.event
-x <- csid2[, c('ID', 'City', 'lon', 'lat', 'Extreme_event', 'Climate_variable', 'Percentile', 'Koppen_Name')]
 write.csv(x, file = '../data/extreme_events.csv', row.names = F)
 
-# plot
-boxplot(csid2$Percentile~csid2$Koppen_Name)
-boxplot(csid2$Percentile~csid2$Disease)
-boxplot(csid2$Percentile~csid2$Extreme.climate.event)
+# x$Percentile <- x$Percentile/100
+custom_colors <- c('Mixed' = 'darkgreen', 'No' = 'black', 'Yes' = 'orange')
+
+# can add shape to show disease or climate event, but gets really complicated to look at
+koppen_plot <- ggplot(x, aes(x = Koppen_Subgroup, y = Percentile, color = Outbreak_risk)) +
+  geom_hline(yintercept = c(10, 90), linetype = 'dashed', color = 'grey') +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, size = 3) +
+  scale_color_manual(values = custom_colors) +
+  facet_grid( ~ Koppen_Group, scales = 'free_x', space = 'free') +
+  theme_bw() +
+  labs(title = 'Extreme event triggered outbreaks by Koppen climate regime',
+       x = '',
+       y = 'Extreme event (percentile)',
+       color = 'Outbreak evidence')
+
+
+disease_plot <- ggplot(x, aes(x = Disease, y = Percentile, color = Outbreak_risk)) +
+  geom_hline(yintercept = c(10, 90), linetype = 'dashed', color = 'grey') +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, size = 3) +
+  scale_color_manual(values = custom_colors) +
+  theme_bw() +
+  labs(title = 'Extreme event triggered outbreaks by disease type',
+       x = '',
+       y = 'Extreme event (percentile)',
+       color = 'Outbreak evidence')
+
+climate_plot <- ggplot(x, aes(x = Extreme_climate_event, y = Percentile, color = Outbreak_risk)) +
+  geom_hline(yintercept = c(10, 90), linetype = 'dashed', color = 'grey') +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, size = 3) +
+  scale_color_manual(values = custom_colors) +
+  theme_bw() +
+  labs(title = 'Extreme event triggered outbreaks by climate event',
+       x = '',
+       y = 'Extreme event (percentile)',
+       color = 'Outbreak evidence')
+
+library(patchwork)
+
+combined_plot <- koppen_plot / (disease_plot | climate_plot) + 
+  plot_layout(guides = 'collect')
+
+# Display the combined plot
+combined_plot
+
+ggsave(filename = '../figures/csid_comparison.pdf', plot = combined_plot, width = 13, height = 6.5)

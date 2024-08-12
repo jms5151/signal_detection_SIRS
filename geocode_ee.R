@@ -4,7 +4,7 @@ library(tidyverse)
 # source google api key
 source('../../../R_functions/Google_API.R')
 
-# get locatio names
+# get location names
 csid <- read.csv('../CSID_scoping_review_SI_edited.csv')
 csid_sm <- csid[,c('Country', 'Study.Area', 'Percentile', 'Climate_variable')]
 csid_lean <- csid_sm[,c('Country', 'Study.Area', 'Climate_variable')]

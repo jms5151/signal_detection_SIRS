@@ -49,7 +49,7 @@ wbd_plot <- plot_ts_with_pp(normal = w_n$normal_dry_10
                             , yMax = 0.03
                             , mainTitle = 'A. Water-borne disease'
                             , addLegend = TRUE
-) 
+                            ) 
 
 
 # VBD

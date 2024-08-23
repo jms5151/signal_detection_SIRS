@@ -81,6 +81,9 @@ x$Agreement[x$Agreement == ""] <- NA
 # save
 write.csv(x, file = '../data/extreme_events.csv', row.names = F)
 
+x <- read.csv('../data/extreme_events.csv')
+x$Percentile[x$Extreme_climate_event == 'Drought'] <- 100 - x$Percentile[x$Extreme_climate_event == 'Drought']
+
 # Plot
 plotFun <- function(xName, colorName, custom_colors, colorLegendName, titleName){
   p <- ggplot(x, aes(x = xName, y = Percentile, color = colorName)) +

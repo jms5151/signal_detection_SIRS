@@ -1,7 +1,6 @@
 # post-processing
 
 # load libraries
-library(pracma) # trapz
 library(moments)
 library(dplyr)
 library(tidyr)
@@ -44,6 +43,13 @@ for(i in 1:length(eefiles)){
   eeMetrics <- process_sir_output(datalist = x, start_list = sTime, model_type = modType, params = modParams, explabel = 'experiment')
   cnMetrics <- process_sir_output(datalist = normal_rep, start_list = sTime, model_type = modType, params = modParams, explabel = 'control')
   newdf <- rbind(eeMetrics, cnMetrics)
+  newdf$ee <- rep(eeMetrics$List, 2)
   newdf$filename <- gsub('.RData', '', eefiles[i])
   df <- rbind(df, newdf)
 }
+
+# update ee column
+df$ee <- gsub('^(?:[^_]*_){2}', '', df$ee)
+
+# save
+saveRDS(df, paste0(scratch_path, 'summaries/long_summary.RData'))

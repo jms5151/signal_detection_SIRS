@@ -20,7 +20,7 @@ calc_power <- function(mean1, mean2, sd1, sd2, n1, n2){
 
 # reorganize data
 reorganized_data <- x %>%
-  pivot_longer(cols = c(final_size, mean_beta, beta_sd, Re_kurtosis, max_Re, max_Re_timing),
+  pivot_longer(cols = c(cumulative_cases, max_S, peak_timing_cases, max_cases, Peakiness),
                names_to = "metric",
                values_to = "value") %>%
   group_by(metric, experiment, filename, ee) %>%

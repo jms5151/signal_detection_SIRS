@@ -1,6 +1,6 @@
 # Function to get segment
 get_segment <- function(data, start_time) {
-  end_time <- start_time + 364
+  end_time <- start_time + 180
   subset(data, time >= start_time & time <= end_time)
 }
 
@@ -19,19 +19,15 @@ wbd_calc_Re <- function(x, beta1, mu, gamma){
 compute_stats <- function(df) {
   summary_stats <- data.frame(
     # Final size
-    final_size = sum(df$I)
-    # Mean beta
-    , mean_beta = mean(df$beta)
-    # SD beta
-    , beta_sd = sd(df$beta)
-    # Kurtosis
-    , Re_kurtosis = moments::kurtosis(df$Re)
-    # Max Re
-    , max_Re = max(df$Re)
+    cumulative_cases = sum(df$I)
+    # Susceptibility (serology)
+    , max_S = max(df$S)
     # Peak timing
-    , max_Re_timing = which(df$Re == max(df$Re))
-    # AUC Infected
-    , auc_I = pracma::trapz(df$I)
+    , peak_timing_cases = which(df$I == max(df$I))    
+    # Max cases
+    , max_cases = max(df$I)
+    # Peakiness (kurtosis)
+    , Peakiness = moments::kurtosis(df$I)
   )
   summary_stats
 }

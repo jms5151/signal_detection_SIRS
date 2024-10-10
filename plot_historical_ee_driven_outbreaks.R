@@ -9,6 +9,7 @@ library(patchwork)
 # read in data
 x <- read.csv('../data/extreme_events.csv')
 x$Percentile[x$Extreme_climate_event == 'Drought'] <- 100 - x$Percentile[x$Extreme_climate_event == 'Drought']
+x$Extreme_climate_event[x$Extreme_climate_event == 'Cyclone/Hurricane/Typhoon'] <- 'Cyclone/\nHurricane/Typhoon'
 
 # Plotting function
 plotFun <- function(xName, colorName, custom_colors, colorLegendName, titleName){
@@ -49,5 +50,5 @@ combined_plot <- (y_axis_label | koppen_plot / (disease_plot | climate_plot)) +
 combined_plot
 
 # save
-ggsave(filename = '../figures/csid_comparison.pdf', plot = combined_plot, width = 13, height = 6.5)
+ggsave(filename = '../figures/csid_comparison.pdf', plot = combined_plot, width = 12, height = 6.5)
 

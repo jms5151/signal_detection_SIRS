@@ -38,7 +38,8 @@ plot_ad <- function(df, yLabel){
 
 # Define values for calculations/visualizations ----------
 # Define the x range
-x_range <- seq(1, 20, length.out = 100)
+# x_range <- seq(1, 20, length.out = 100)
+x_range <- seq(1, 20, by = 0.1)
 
 # Define range of fraction of attributable risk
 far_range <- seq(0, 1, 0.01)

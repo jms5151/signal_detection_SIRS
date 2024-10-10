@@ -2,7 +2,7 @@
 
 # Step 1: create graphical figure of FAR and RR expectations for range of climate-transmission relationships
 source('far_and_rr_calculations_generic.R')
-
+source('attributable_fraction_framework.R')
 # Step 2: determine thresholds for extreme events given global climate regimes
 source('ancillary_climate_data.R')
 

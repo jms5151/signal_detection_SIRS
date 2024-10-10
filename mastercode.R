@@ -44,3 +44,6 @@ source('power_analyses.R')
 
 # Step 14: create heatmaps of power analyses
 source('heatmaps.R')
+
+# Step 15: create plots relating extreme events to past outbreaks
+source('analyze_prior_ex_events.R')

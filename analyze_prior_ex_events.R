@@ -94,31 +94,33 @@ plotFun <- function(xName, colorName, custom_colors, colorLegendName, titleName)
     theme_bw() +
     labs(title = titleName,
          x = '',
-         y = 'Extreme event (percentile)',
+         y = '',
          color = colorLegendName)
   return(p)
 }
 
-# custom_colors_2 <- c('High' = 'red', 'Medium' = 'yellow', 'Low' = 'black')
-# 
-# plotFun(xName = x$Extreme_climate_event, colorName = x$Agreement, custom_colors = custom_colors_2, colorLegendName = 'Agreement', titleName = '')
-# plotFun(xName = x$Extreme_climate_event, colorName = x$Evidence, custom_colors = custom_colors_2, colorLegendName = 'Evidence', titleName = '')
-# plotFun(xName = x$Disease, colorName = x$Evidence, custom_colors = custom_colors_2, colorLegendName = 'Evidence', titleName = '')
-
-# x$Percentile <- x$Percentile/100
-custom_colors_1 <- c('Mixed' = 'darkgreen', 'No' = 'black', 'Yes' = 'orange')
+custom_colors_1 <- c('Mixed' = '#d4ac0d', 'No' = 'black', 'Yes' = '#0c9e81')
 
 # can add shape to show disease or climate event, but gets really complicated to look at
-koppen_plot <- plotFun(xName = x$Koppen_Subgroup, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Extreme event triggered outbreaks by Koppen climate regime') +
+koppen_plot <- plotFun(xName = x$Koppen_Subgroup, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Köppen climate regime') +
   facet_grid( ~ Koppen_Group, scales = 'free_x', space = 'free')
 
-disease_plot <- plotFun(xName = x$Disease, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Extreme event triggered outbreaks by disease type') 
+disease_plot <- plotFun(xName = x$Disease, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Disease type') 
 
-climate_plot <- plotFun(xName = x$Extreme_climate_event, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Extreme event triggered outbreaks by climate event') 
+climate_plot <- plotFun(xName = x$Extreme_climate_event, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Climate event') 
 
 # combine plots
-combined_plot <- koppen_plot / (disease_plot | climate_plot) + 
-  plot_layout(guides = 'collect')
+# combined_plot <- koppen_plot / (disease_plot | climate_plot) + 
+#   plot_layout(guides = 'collect', axes = 'collect_y') +
+#   plot_annotation('Extreme event driven outbreaks, cateogrized by:')
+
+y_axis_label <- ggplot() +
+  geom_text(aes(0, 0, label = 'Extreme event (percentile)'), angle = 90, size = 4, hjust = 0.5) +
+  theme_void()  # Remove all background and axis elements
+
+combined_plot <- (y_axis_label | koppen_plot / (disease_plot | climate_plot)) + 
+  plot_layout(widths = c(0.07, 1), guides = 'collect') +
+  plot_annotation('Extreme event driven outbreaks, cateogrized by:')
 
 # Display the combined plot
 combined_plot

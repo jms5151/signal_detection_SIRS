@@ -1,8 +1,8 @@
 # Research map
 
 # Step 1: create graphical figure of FAR and RR expectations for range of climate-transmission relationships
-source('far_and_rr_calculations_generic.R')
 source('attributable_fraction_framework.R')
+
 # Step 2: determine thresholds for extreme events given global climate regimes
 source('ancillary_climate_data.R')
 
@@ -23,7 +23,7 @@ source('plot_climate_time_series.R')
 source('identify_time_points_of_diff_susceptibility.R')
 
 # Step 8: create 'extreme event' climate time series
-source('simulate_climate_extremes.R')
+source('simulate_climate_extremes.R')d
 
 # Step 9: create 'extreme event' time series of betas from extreme event climate time series
 # use second source directory

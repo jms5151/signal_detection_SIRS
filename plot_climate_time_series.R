@@ -55,7 +55,7 @@ for(j in 1:length(clim_files)){
   }
   combined_df <- rbind(combined_df, long_df)
 }
-  
+
 # format data
 combined_df$climate_regime <- str_match(combined_df$simulation, "^[^_]*_(.*?)_[^_]*$")[, 2]
 combined_df$climate_regime <- str_to_title(combined_df$climate_regime)

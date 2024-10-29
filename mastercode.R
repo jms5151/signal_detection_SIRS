@@ -23,7 +23,7 @@ source('plot_climate_time_series.R')
 source('identify_time_points_of_diff_susceptibility.R')
 
 # Step 8: create 'extreme event' climate time series
-source('simulate_climate_extremes.R')d
+source('simulate_climate_extremes.R')
 
 # Step 9: create 'extreme event' time series of betas from extreme event climate time series
 # use second source directory

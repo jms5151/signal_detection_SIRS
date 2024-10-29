@@ -17,13 +17,8 @@ Sid <- function(d, t1, t2){
 for(i in 1:length(dis_files)){
   d <- readRDS(dis_files[i])
   regimeName <- gsub('../data/sim_results/normal_|.RData', '', dis_files[i])
-  if(regimeName == 'temperate'){
-    t1 = 31
-    t2 = 300
-  } else {
-    t1 = 300
-    t2 = 600
-  }
+  t1 = 300
+  t2 = 600
   d2 <- Sid(d, t1, t2)
   newfilepath <- gsub('sim_results/', 'sim_sids/sid_', dis_files[i])
   saveRDS(d2, file = newfilepath)

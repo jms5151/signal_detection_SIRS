@@ -34,9 +34,9 @@ gen_clim_list <- function(df, clim = 'notrain', newname){
 }
 
 # generate climate time series
-temperate_list <- gen_clim_list(df = t17, newname = 'normal_temperate')
-warm_list <- gen_clim_list(df = t23, newname = 'normal_warm')
-hot_list <- gen_clim_list(df = t29, newname = 'normal_hot')
+temperate_list <- gen_clim_list(df = t20, newname = 'normal_temperate')
+warm_list <- gen_clim_list(df = t24, newname = 'normal_warm')
+hot_list <- gen_clim_list(df = t28, newname = 'normal_hot')
 
 dry_list <- gen_clim_list(df = dry, clim = 'rain', newname = 'normal_dry')
 moderate_list <- gen_clim_list(df = mod, clim = 'rain', newname = 'normal_moderate')

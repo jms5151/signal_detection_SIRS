@@ -43,10 +43,10 @@ w_n <- readRDS('../data/sim_results/normal_dry.RData')
 w_ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_dry.RData')
 w_ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_dry.RData')
 
-wbd_plot <- plot_ts_with_pp(normal = w_n$normal_dry_10
-                            , Smax = w_ee_Smax$dry_10_100I_7D
-                            , Smin = w_ee_Smin$dry_10_100I_7D
-                            , yMax = 0.03
+wbd_plot <- plot_ts_with_pp(normal = w_n$normal_dry_2
+                            , Smax = w_ee_Smax$dry_2_70I_7D
+                            , Smin = w_ee_Smin$dry_2_70I_7D
+                            , yMax = 0.25
                             , mainTitle = 'A. Water-borne disease'
                             , addLegend = TRUE
                             ) 
@@ -57,9 +57,9 @@ n <- readRDS('../data/sim_results/normal_warm.RData')
 ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_warm.RData')
 ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_warm.RData')
 
-vbd_plot <- plot_ts_with_pp(normal = n$normal_warm_20
-                , Smax = ee_Smax$warm_20_6I_14D
-                , Smin = ee_Smin$warm_20_6I_14D
+vbd_plot <- plot_ts_with_pp(normal = n$normal_warm_3
+                , Smax = ee_Smax$warm_3_15I_20D
+                , Smin = ee_Smin$warm_3_15I_20D
                 , yMax = 0.9
                 , mainTitle = 'B. Vector-borne disease'
                 )

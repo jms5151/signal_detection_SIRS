@@ -66,10 +66,10 @@ combined_df$metric[combined_df$metric == 'S'] <- 'Susceptible (proportion)'
 
 # plot
 wbd_df <- subset(combined_df, disease == 'Water-borne disease')
-wbd_plot <- create_clim_disease_plot(x = wbd_df, titleName = 'Water-borne disease')
+wbd_plot <- create_clim_disease_plot(x = wbd_df, titleName = 'Water-borne disease') #+ geom_vline(xintercept =  c(300, 650))
 ggsave(filename = '../figures/time_series/wbd_clim_dis_ts.pdf', plot = wbd_plot, width = 11, height = 7)
 
 vbd_df <- subset(combined_df, disease == 'Vector-borne disease')
 vbd_df$climate_regime <- factor(vbd_df$climate_regime, levels = c('Temperate', 'Warm', 'Hot'))
-vbd_plot <- create_clim_disease_plot(x = vbd_df, titleName = 'Vector-borne disease')
+vbd_plot <- create_clim_disease_plot(x = vbd_df, titleName = 'Vector-borne disease') #+ geom_vline(xintercept =  c(300, 650))
 ggsave(filename = '../figures/time_series/vbd_clim_dis_ts.pdf', plot = vbd_plot, width = 11, height = 7)

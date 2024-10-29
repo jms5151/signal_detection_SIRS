@@ -55,7 +55,7 @@ t28 <- subset(wtemp, p90 == 28)
 t24 <- subset(wtemp, p90 == 24)
 t20 <- subset(wtemp, p90 == 20)
 
-dry <- subset(wprecip, p90 > 75 & p90 < 85)
+dry <- subset(wprecip, p90 > 95 & p90 < 115)
 mod <- subset(wprecip, p90 > 150 & p90 < 170)
 wet <- subset(wprecip, p90 > 330 & p90 < 350)
 

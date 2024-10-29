@@ -4,8 +4,6 @@ source('functions_to_simulate_climate.R')
 t.Magnitudes = seq(1, 15, 1)
 t.Durations = seq(1, 20, 1)
 r.Magnitudes = seq(10, 100, 10)
-# r.Magnitudes_Add = seq(10, 100, 10)
-# r.Magnitudes_Mult = c(seq(1.1, 2, 0.1), seq(2.5, 3, 0.5))
 r.Durations = seq(1, 7, 1) 
 
 # list files

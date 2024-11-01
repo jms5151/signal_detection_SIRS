@@ -20,7 +20,7 @@ calc_power <- function(mean1, mean2, sd1, sd2, n1, n2){
 
 # reorganize data
 reorganized_data <- x %>%
-  pivot_longer(cols = c(cumulative_cases, max_S, peak_timing_cases, max_cases, Peakiness),
+  pivot_longer(cols = c(peak_timing, max_incidence, cumulative_proportion, duration, peakiness),
                names_to = "metric",
                values_to = "value") %>%
   group_by(metric, experiment, filename, ee) %>%
@@ -32,6 +32,8 @@ reorganized_data <- x %>%
   pivot_wider(names_from = experiment,
               values_from = c(mean_value, sd_value, n),
               names_sep = "_") %>%
+  mutate(outcome_comparison = ifelse(mean_value_experiment > mean_value_control , 'greater', 'less'),
+         mean_diff = mean_value_experiment - mean_value_control ) %>%
   as.data.frame()
 
 # calculate power
@@ -43,14 +45,15 @@ reorganized_data$power <- mapply(calc_power,
                                  , reorganized_data$n_control
                                  , reorganized_data$n_experiment)
 
+
+reorganized_data$power[is.na(reorganized_data$power)] <- 0
+
 # add some useful labels
+reorganized_data$metric[reorganized_data$metric == 'duration'] <- 'outbreak_duration'
 reorganized_data$suscept <- gsub('_t.*', '', reorganized_data$filename)
-reorganized_data$type <- ifelse(grepl('multi', reorganized_data$filename)==T, 'multiplicative', 'additive')
 reorganized_data$regime <- gsub('.*_t_', '', reorganized_data$filename)
-reorganized_data$regime <- gsub('multi_', '', reorganized_data$regime)
 reorganized_data$intensity <- gsub('_.*', '', reorganized_data$ee)
 reorganized_data$intensity <- gsub('I', '', reorganized_data$intensity)
-reorganized_data$intensity <- gsub('neg', '-', reorganized_data$intensity)
 reorganized_data$intensity <- as.numeric(reorganized_data$intensity)
 reorganized_data$duration <- gsub('.*_', '', reorganized_data$ee)
 reorganized_data$duration <- gsub('D', '', reorganized_data$duration)
@@ -64,8 +67,9 @@ highest_power <- reorganized_data %>%
   group_by(filename, ee) %>%
   top_n(1, power) %>%
   # select(filename, ee, metric, power)
-  select(filename, ee, suscept, regime, type, intensity, duration, metric, power) %>%
+  select(filename, ee, suscept, regime, intensity, duration, metric, power) %>%
   as.data.frame()
 
 # save
 saveRDS(highest_power, file = '../data/sim_summaries/highest_power_summary.RData')
+

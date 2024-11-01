@@ -27,7 +27,7 @@ plot_ts_with_pp <- function(normal, Smax, Smin, yMax = 1, mainTitle = '', addLeg
   # Create the phase plot using ggplot2
   phase_plot <- ggplot(Smax, aes(x = I, y = S)) +
     geom_path(color = '#f00745', size = 1) +
-    geom_path(data = Smin, aes(x = I, y = S), color = '#0e9e97', size = 1, linetype = 'longdash') +
+    geom_path(data = Smin, aes(x = I, y = S), color = '#0e9e97', linewidth = 1, linetype = 'longdash') +
     geom_path(data = normal, aes(x = I, y = S)) +
     labs(x = 'Infected', y = 'Susceptible') +
     theme_bw()
@@ -67,4 +67,3 @@ vbd_plot <- plot_ts_with_pp(normal = n$normal_warm_3
 # combine and save
 combined_plot <- ggarrange(wbd_plot, vbd_plot, ncol = 2)
 ggsave(filename = '../figures/time_series/combined_dis_ee_ts.pdf', plot = combined_plot, width = 16, height = 5)
-

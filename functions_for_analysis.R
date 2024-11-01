@@ -1,47 +1,55 @@
 # Function to get segment
-get_segment <- function(data, start_time) {
-  end_time <- start_time + 180
+get_segment <- function(data) {
+  start_time = 300
+  end_time = 650
   subset(data, time >= start_time & time <= end_time)
 }
 
-# Re calculations
-vbd_calc_Re <- function(x, gamma){
-  x$Re = x$beta * x$S / gamma
-  return(x)
-}
-
-wbd_calc_Re <- function(x, beta1, mu, gamma){
-  x$Re = (beta1 + x$beta) * x$S / (mu + gamma)
-  return(x)
-}
-
 # Function to compute summary statistics
-compute_stats <- function(df) {
-  summary_stats <- data.frame(
-    # Final size
-    cumulative_cases = sum(df$I)
-    # Susceptibility (serology)
-    , max_S = max(df$S)
-    # Peak timing
-    , peak_timing_cases = which(df$I == max(df$I))    
-    # Max cases
-    , max_cases = max(df$I)
-    # Peakiness (kurtosis)
-    , Peakiness = moments::kurtosis(df$I)
-  )
-  summary_stats
-}
-
-process_sir_output <- function(datalist, start_list, model_type, params, explabel){
-  # calculate Re values
-  if (model_type == 'vbd') {
-    df <- lapply(datalist, function(x) vbd_calc_Re(x, gamma = vbd.gamma))
+compute_stats <- function(df, ht) {
+  
+  peaks <- data.frame(findpeaks(df$I, minpeakheight = ht, minpeakdistance = 10))
+  
+  if(nrow(peaks) == 0){
+    summary_stats <- data.frame(peak_timing = 0, max_incidence = 0, cumulative_proportion = 0, duration = 0, peakiness = 0)
   } else {
-    df <- lapply(datalist, function(x) wbd_calc_Re(x, beta1 = wbd.beta1, mu = mu, gamma = wbd.gamma))
+    
+    colnames(peaks) <- c('Peak_height', 'Peak_timing', 'Start_outbreak', 'End_outbreak')
+    
+    if(nrow(peaks) > 1){
+      idx = which(peaks$Peak_height == max(peaks$Peak_height))
+    } else if(nrow(peaks) == 1){
+      idx = 1
+    }
+    
+    summary_stats <- data.frame(
+      # Peak timing
+      peak_timing = peaks$Peak_timing[idx]    
+      # Max incidence
+      , max_incidence = peaks$Peak_height[idx]
+      # Final size
+      , cumulative_proportion = trapz(df$I[peaks$Start_outbreak[idx]:peaks$End_outbreak[idx]])
+      # Duration largest outbreak
+      , duration = peaks$End_outbreak[idx] - peaks$Start_outbreak[idx]
+      # Number outbreaks
+      , peakiness = nrow(peaks)
+    )
+    
   }
   
-  dfshort <- Map(get_segment, data = df, start_time = start_list)
-  results <- Map(compute_stats, df = dfshort)
+  return(summary_stats)
+}
+
+process_sir_output <- function(datalist, model_type, explabel){
+  # calculate Re values
+  if (model_type == 'vbd') {
+    ht_temp = 0.01
+  } else {
+    ht_temp = 0.10
+  }
+  
+  dfshort <- Map(get_segment, data = datalist)
+  results <- Map(compute_stats, df = dfshort, ht = ht_temp)
   
   # flatten
   results_flattened <- bind_rows(lapply(results, bind_rows, .id = "Dataset"), .id = "List")

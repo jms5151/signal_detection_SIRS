@@ -41,9 +41,8 @@ compute_stats <- function(df, ht) {
 }
 
 process_sir_output <- function(datalist, model_type, explabel){
-  # calculate Re values
-  if (model_type == 'vbd') {
-    ht_temp = 0.01
+  if (model_type == 'wbd') {
+    ht_temp = 0.02
   } else {
     ht_temp = 0.10
   }

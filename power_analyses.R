@@ -20,7 +20,7 @@ calc_power <- function(mean1, mean2, sd1, sd2, n1, n2){
 
 # reorganize data
 reorganized_data <- x %>%
-  pivot_longer(cols = c(peak_timing, max_incidence, cumulative_proportion, duration, peakiness),
+  pivot_longer(cols = c(peak_timing, max_incidence, cumulative_proportion, duration),
                names_to = "metric",
                values_to = "value") %>%
   group_by(metric, experiment, filename, ee) %>%
@@ -49,15 +49,19 @@ reorganized_data$power <- mapply(calc_power,
 reorganized_data$power[is.na(reorganized_data$power)] <- 0
 
 # add some useful labels
-reorganized_data$metric[reorganized_data$metric == 'duration'] <- 'outbreak_duration'
-reorganized_data$suscept <- gsub('_t.*', '', reorganized_data$filename)
-reorganized_data$regime <- gsub('.*_t_', '', reorganized_data$filename)
-reorganized_data$intensity <- gsub('_.*', '', reorganized_data$ee)
-reorganized_data$intensity <- gsub('I', '', reorganized_data$intensity)
-reorganized_data$intensity <- as.numeric(reorganized_data$intensity)
-reorganized_data$duration <- gsub('.*_', '', reorganized_data$ee)
-reorganized_data$duration <- gsub('D', '', reorganized_data$duration)
-reorganized_data$duration <- as.numeric(reorganized_data$duration)
+add_labels <- function(df){
+  df$metric[df$metric == 'duration'] <- 'outbreak_duration'
+  df$suscept <- gsub('_t.*', '', df$filename)
+  df$regime <- gsub('.*_t_', '', df$filename)
+  df$intensity <- gsub('_.*', '', df$ee)
+  df$intensity <- gsub('I', '', df$intensity)
+  df$intensity <- as.numeric(df$intensity)
+  df$duration <- gsub('.*_', '', df$ee)
+  df$duration <- gsub('D', '', df$duration)
+  df$duration <- as.numeric(df$duration)
+}
+
+reorganized_data <- add_labels(df = reorganized_data)
 
 # save
 saveRDS(reorganized_data, file = '../data/sim_summaries/power_summary.RData')

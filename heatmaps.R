@@ -8,15 +8,13 @@ dfpow <- readRDS('../data/sim_summaries/highest_power_summary.RData')
 
 # format
 prain <- subset(dfpow, regime == 'dry' | regime == 'moderate' | regime == 'wet')
-prain_add <- subset(prain, type == 'additive')
-prain_multi <- subset(prain, type == 'multiplicative')
 ptemp <- subset(dfpow, regime == 'temperate' | regime == 'warm' | regime == 'hot')
 
 # format data
 format_ee_data <- function(dfx, climvar){
   x <- dfx %>%
     mutate(alpha_value = ifelse(power > 0.8, 1, 0.7),
-           susceptibility = ifelse(suscept == 'S_max', 'High pop. susceptibility', 'Low pop. susceptibility')
+           susceptibility = ifelse(suscept == 'S_max', 'Low pop. susceptibility', 'High pop. susceptibility')
     )
   x$regime <- paste0(toupper(substring(x$regime, 1, 1)), substring(x$regime, 2))
   if(climvar == 'temp'){
@@ -25,9 +23,10 @@ format_ee_data <- function(dfx, climvar){
     x$regime <- factor(x$regime, levels = c('Dry', 'Moderate', 'Wet'))
   }
   x$metric <- paste0(toupper(substring(x$metric, 1, 1)), substring(x$metric, 2))
-  x$metric[x$metric == 'Peakiness'] <- 'Outbreak peakiness (kurtosis)'
-  x$metric[x$metric == 'Max_S'] <- 'Serology (pop. susceptibility)'
-  x$metric[x$metric == 'peak_timing_cases'] <- 'Timing of outbreak peak'
+  x$metric[x$metric == 'cumulative_proportion'] <- 'Total cases'
+  x$metric[x$metric == 'peak_timing'] <- 'Timing of outbreak peak'
+  x$metric[x$metric == 'outbreak_duration'] <- 'Outbreak duration'
+  x$metric[x$metric == 'max_incidence'] <- 'Max incidence'
   x$metric <- gsub('_', ' ', x$metric)
   return(x)  
 }
@@ -54,7 +53,6 @@ alpha_legend_plot <- ggplot(alpha_legend, aes(x = dummy_x, y = alpha_value, fill
 
 # Show the plot
 alpha_legend_plot
-
 
 makerobustheatmap <- function(dfx, climvar, stpsize){
   # subset data
@@ -107,7 +105,5 @@ makerobustheatmap <- function(dfx, climvar, stpsize){
 }
 
 # create and save heat maps
-makerobustheatmap(dfx = prain_add, climvar = 'rain', stpsize = 3)
-makerobustheatmap(dfx = prain_multi, climvar = 'rain_multi', stpsize = 3)
+makerobustheatmap(dfx = prain, climvar = 'rain', stpsize = 3)
 makerobustheatmap(dfx = ptemp, climvar = 'temp', stpsize = 1)
-

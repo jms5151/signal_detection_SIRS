@@ -1,109 +1,118 @@
-# load libraries
 library(tidyverse)
+library(stringr)
 library(ggplot2)
 library(patchwork)
 
-# read in data
-dfpow <- readRDS('../data/sim_summaries/highest_power_summary.RData')
+x = readRDS('../data/sim_summaries/highest_t_summary.RData')
 
-# format
-prain <- subset(dfpow, regime == 'dry' | regime == 'moderate' | regime == 'wet')
-ptemp <- subset(dfpow, regime == 'temperate' | regime == 'warm' | regime == 'hot')
+x$regime <- factor(x$regime, levels = c('Temperate', 'Warm', 'Hot', 'Dry', 'Moderate', 'Wet'))
 
-# format data
-format_ee_data <- function(dfx, climvar){
-  x <- dfx %>%
-    mutate(alpha_value = ifelse(power > 0.8, 1, 0.7),
-           susceptibility = ifelse(suscept == 'S_max', 'Low pop. susceptibility', 'High pop. susceptibility')
-    )
-  x$regime <- paste0(toupper(substring(x$regime, 1, 1)), substring(x$regime, 2))
-  if(climvar == 'temp'){
-    x$regime <- factor(x$regime, levels = c('Temperate', 'Warm', 'Hot'))
-  } else {
-    x$regime <- factor(x$regime, levels = c('Dry', 'Moderate', 'Wet'))
-  }
-  x$metric <- paste0(toupper(substring(x$metric, 1, 1)), substring(x$metric, 2))
-  x$metric[x$metric == 'cumulative_proportion'] <- 'Total cases'
-  x$metric[x$metric == 'peak_timing'] <- 'Timing of outbreak peak'
-  x$metric[x$metric == 'outbreak_duration'] <- 'Outbreak duration'
-  x$metric[x$metric == 'max_incidence'] <- 'Max incidence'
-  x$metric <- gsub('_', ' ', x$metric)
-  return(x)  
-}
-
-
-# Create a dataframe for the alpha legend
-alpha_legend <- data.frame(
-  alpha_value = seq(0, 1, length.out = 100),  # Alpha values from 0.25 to 1
-  dummy_x = 1  # A constant x-value to create a bar-like structure
+# Define the mapping for directions and corresponding colors
+direction_colors <- c(#1b9e77
+  "No difference" = 'black',
+  # time/duration change
+  "Shorter" = '#79530B',
+  "Earlier and shorter" = '#95680E',
+  "Later and shorter" = '#B17E10',
+  "Earlier" = '#CD9513',
+  "Earlier and longer" = '#E9AD16',
+  "Longer" = '#ECBA32',
+  "Later" = '#EFC64E',
+  "Later and longer" = '#F1D26A',
+  # larger outbreaks
+  "Larger" = '#9B0D46',
+  "Larger and longer" = '#AE0A3B',
+  "Later and larger" = '#C1062B',
+  "Earlier and larger" = '#D50116',
+  "Later, larger, and longer" = '#E60000',
+  "Earlier, larger, and longer" = '#F51400',
+  "Earlier, larger, and shorter" = '#FF3305',
+  # smaller outbreaks
+  "Smaller" = '#0EA0BE',
+  "Smaller and shorter" = '#1B6F8D',
+  "Later, smaller, and shorter" = '#214B63',
+  "Earlier, smaller, and shorter" = '#213140'#44c8b5
 )
 
-# Plot the custom alpha legend as a separate plot
-alpha_legend_plot <- ggplot(alpha_legend, aes(x = dummy_x, y = alpha_value, fill = alpha_value)) +
-  geom_tile() +  # Use geom_tile to create the bar
-  scale_fill_gradient(low = "grey", high = "black", guide = "colourbar", name = "Alpha") +  # Grayscale from light to dark
-  scale_y_continuous(name = 'Power', limits = c(0, 1), breaks = seq(0, 1, by = 0.25), expand = c(0, 0)) +  # Customize y-axis for alpha
-  theme_minimal() +
-  theme(
-    axis.title.x = element_blank(),  # Remove x-axis label
-    axis.text.x = element_blank(),   # Remove x-axis text
-    axis.ticks.x = element_blank(),  # Remove x-axis ticks
-    legend.position = "none"         # Hide any automatic legends
+# Recode `direction` and add a `color` column
+x <- x %>%
+  mutate(
+    direction = recode(
+      direction,
+      "same_PeakT_same_CumProp_less_Dur" = "Shorter",
+      "greater_PeakT_same_CumProp_less_Dur" = "Later and shorter",
+      "less_PeakT_same_CumProp_same_Dur" = "Earlier",
+      "same_PeakT_same_CumProp_same_Dur" = "No difference",
+      "greater_PeakT_greater_CumProp_greater_Dur" = "Later, larger, and longer",
+      "less_PeakT_greater_CumProp_greater_Dur" = "Earlier, larger, and longer",
+      "less_PeakT_same_CumProp_greater_Dur" = "Earlier and longer",
+      "less_PeakT_same_CumProp_less_Dur" = "Earlier and shorter",
+      "same_PeakT_less_CumProp_less_Dur" = "Smaller and shorter",
+      "same_PeakT_same_CumProp_greater_Dur" = "Longer",
+      "greater_PeakT_same_CumProp_same_Dur" = "Later",
+      "same_PeakT_greater_CumProp_greater_Dur" = "Larger and longer",
+      "greater_PeakT_same_CumProp_greater_Dur" = "Later and longer",
+      "less_PeakT_greater_CumProp_same_Dur" = "Earlier and larger",
+      "same_PeakT_greater_CumProp_same_Dur" = "Larger",
+      "greater_PeakT_less_CumProp_less_Dur" = "Later, smaller, and shorter",
+      "greater_PeakT_greater_CumProp_same_Dur" = "Later and larger",
+      "same_PeakT_less_CumProp_same_Dur" = "Smaller",
+      "less_PeakT_less_CumProp_less_Dur" = "Earlier, smaller, and shorter",
+      "less_PeakT_greater_CumProp_less_Dur" = "Earlier, larger, and shorter"
+    ),
+    color = direction_colors[direction] # Add color column based on direction
   )
 
-# Show the plot
-alpha_legend_plot
 
-makerobustheatmap <- function(dfx, climvar, stpsize){
-  # subset data
-  x <- format_ee_data(dfx, climvar)
-  
-  # subset data for stippeling
-  stdata <- x %>%
-    filter(power >= 0.8) %>%
-    mutate(power_indicator = ifelse(power > 0.8, 'High power (> 0.8)', 'Low power (< 0.8)'))  # Adjust as necessary
-  
-  # create heatmap
-  p <- ggplot() +
-    # First, the geom_tile layer with fill for `metric`
-    geom_tile(data = x, aes(x = intensity, y = duration, fill = metric, alpha = power)) +  # Removes borders around the tiles
-    # scale_alpha_identity() +
-    
-    # Use scale_alpha_continuous for continuous alpha mapping
-    scale_alpha_continuous(range = c(0.25, 1)) +  # Adjust the range if necessary
-    
-    # Apply the correct scale based on metric type
-    scale_fill_viridis_d() +  # For continuous metric, or use scale_fill_viridis_d() for discrete
-    
-    # Second, the geom_point layer with shape for `power_indicator`
-    geom_point(data = stdata, aes(x = intensity, y = duration, shape = power_indicator), 
-               size = stpsize, color = 'black', alpha = 0.5) +  # Stippling effect
-    
+
+plt_regimes <- function(df, xLabel, yLabel, titleLabel){
+  p <- ggplot(df, aes(x = intensity, y = duration, fill = direction)) +
+    geom_tile() +
+    scale_fill_manual(values = direction_colors) +
+    facet_grid(~ regime, scales = 'free') +
+    labs(x = xLabel, y = yLabel, title = titleLabel, fill = '') +
     theme_bw() +
-    facet_grid(susceptibility ~ regime, scales = 'free') +
-    xlab('Intensity') +
-    ylab('Duration') +
-    labs(fill = '', shape = '') +  # Separate labels for shape and fill
-    
-    # Remove gridlines for cleaner presentation
-    theme(legend.position = 'bottom',
-          panel.grid.major = element_blank(),   # Removes major gridlines
-          panel.grid.minor = element_blank()) +
-    
-    # Use guides to separate fill and shape legends
-    guides(fill = guide_legend(order = 1),      # Control order of legends
-           shape = guide_legend(order = 2),
-           alpha = 'none')     # Display shape legend separately
+    theme(
+      legend.position = 'none',
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+  return(p)
   
-  # Arrange the plots with alpha_legend_plot being smaller
-  combined_plot <- p + alpha_legend_plot + 
-    plot_layout(ncol = 2, widths = c(4, 0.1))  # Adjust heights as needed
-  
-  savedir <- '../figures/heatmaps_regimes/'
-  filePath <- paste0(savedir, climvar, '_robust', '.png')
-  ggsave(combined_plot, file = filePath, dpi = 300, width = 10, height = 6.5) 
 }
 
-# create and save heat maps
-makerobustheatmap(dfx = prain, climvar = 'rain', stpsize = 3)
-makerobustheatmap(dfx = ptemp, climvar = 'temp', stpsize = 1)
+wdf = subset(x, regime == 'Dry'| regime == 'Moderate' | regime == 'Wet' )
+wdf = subset(wdf, suscept == 'S_max')
+wbd_plt <- plt_regimes(df = wdf, xLabel = 'Heavy rainfall intensity (mm above threshold)', yLabel = 'Heavy rainfall duration (days)', titleLabel = 'Water-borne disease')
+
+vdf = subset(x, regime == 'Temperate'| regime == 'Warm' | regime == 'Hot')
+vdf = subset(vdf, suscept == 'S_max')
+vbd_plt <- plt_regimes(df = vdf, xLabel = 'Heatwave intensity (degrees Celsius above threshold)', yLabel = 'Heatwave duration (days)', titleLabel = 'Vector-borne disease')
+
+# Custom legend data
+legend_data <- data.frame(
+  group = c('Outbreak type', rep('Change in timing/duration', 8), rep('Larger outbreaks', 7), rep('Smaller outbreaks', 4)),
+  category = names(direction_colors),
+  color = unname(direction_colors)
+)
+
+legend_data$group <- factor(legend_data$group, levels = c('Outbreak type', 'Change in timing/duration', 'Larger outbreaks', 'Smaller outbreaks'))
+
+# Create a standalone legend plot
+legend_plot <- ggplot(legend_data, aes(x = 1, y = category, color = color)) +
+  geom_point(size = 5, shape = 15) +
+  geom_text(aes(label = category), hjust = -0.2, size = 4) +
+  facet_wrap(~group, scales = "free_y", ncol = 4) +  # Group categories
+  scale_color_identity() +  # Use the exact colors provided in `color`
+  theme_void() +            # Remove axis lines and grids
+  theme(
+    strip.text = element_text(size = 12, face = "bold"),  # Group titles
+    panel.spacing = unit(0.0001, "lines"),                      # Reduce space between columns
+    legend.position = "none"                             # No default legend
+  )
+
+
+combined_plot <- (wbd_plt / vbd_plt) + 
+  legend_plot
+
+ggsave(filename = '../figures/heatmaps_regimes/fingerprint_plot.pdf', plot = combined_plot, width = 11, height = 6.5)

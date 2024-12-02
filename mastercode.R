@@ -50,3 +50,6 @@ source('heatmaps.R')
 
 # Step 16: create plots relating extreme events to past outbreaks
 source('plot_historical_ee_driven_outbreaks.R')
+
+# Step 17: create conceptual framework plot for relative confidence in attribution
+source('scatterplot.R')

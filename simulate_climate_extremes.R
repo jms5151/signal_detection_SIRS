@@ -23,28 +23,17 @@ generate_ee_lists <- function(climpaths, susppaths, magnitude_change, duration, 
     s <- readRDS(susppaths[i])
     for(j in stypes){
       ee_time_series <- list()
-      ee_start_times <- list()
       slist <- unlist(lapply(s, '[', j))
       for(k in magnitude_change){
         for(l in duration){
           # Apply generate_extreme_event to all lists in c and smins using Map
-          ee <- Map(generate_extreme_event, x = c, time = slist, magnitude_change = k, duration = l)
-          ee_ts <- lapply(ee, function(x) x[[1]])
-          names(ee) <- gsub('normal_', '', names(ee))
-          names(ee_ts) <- paste0(names(ee), '_', k, 'I_', l, 'D')
-          ee_time_series <- c(ee_time_series, ee_ts)
-          # separate start times and save
-          ee_start <- lapply(ee, function(x) x[[2]])
-          names(ee_start) <- gsub('normal_', '', names(ee_start))
-          names(ee_start) <- paste0(names(ee), '_', k, 'I_', l, 'D')
-          ee_start_times <- c(ee_start_times, ee_start)
+          ee <- generate_extreme_event(x = c, time = slist, magnitude_change = k, duration = l)
+          names(ee) <- paste0(gsub('../data/sim_climate/normal_|_clim.RData', '', climpaths[i]), '_', k, 'I_', l, 'D')
+          ee_time_series <- c(ee_time_series, ee)
         }
       }
       eeFileName1 <- gsub('sim_climate/normal_', paste0('sim_climate_ee/', j, '_'), climpaths[i])
       saveRDS(ee_time_series, file = eeFileName1)
-      eeFileName2 <- gsub('climate_ee/', 'start_times/', eeFileName1)
-      eeFileName2 <- gsub('_clim', '', eeFileName2)
-      saveRDS(ee_start_times, file = eeFileName2)
       }
   }
 }

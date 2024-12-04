@@ -3,8 +3,8 @@
 # source functions
 source('functions_to_calculate_beta.R')
 
-# filepaths: normal climate
-sourcedir <- '../data/sim_climate/'
+# filepaths: extreme climate
+sourcedir <- '../data/sim_climate_ee/'
 
 # list names of climate lists
 clim_files <- list.files(sourcedir, full.names = T)
@@ -13,9 +13,9 @@ clim_files <- list.files(sourcedir, full.names = T)
 for(i in clim_files){
   x_clim <- readRDS(i)
   if(grepl('temperate|warm|hot', i)){
-    x_beta <- list(sapply(x_clim, function(x) Lambrechts_beta(x))) 
+    x_beta <- lapply(x_clim, function(x) Lambrechts_beta(x))
   } else if(grepl('dry|moderate|wet', i)){
-    x_beta <- list(sapply(x_clim, function(x) Eisenberg_beta(x))) 
+    x_beta <- lapply(x_clim, function(x) Eisenberg_beta(x)) 
   }
   newfilepath <- gsub('climate|clim', 'betas', i)
   saveRDS(x_beta, file = newfilepath)

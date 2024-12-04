@@ -20,22 +20,25 @@ plot_ts_with_pp <- function(normal, Smax, Smin, yMax = 1, mainTitle = '', addLeg
             , legend.title = element_blank()
             , legend.background = element_blank()
             )
+    drawplotx <- 0.68
   } else {
     main_plot <- main_plot + theme(legend.position = 'non')
+    drawplotx <- 0.08
   }
 
   # Create the phase plot using ggplot2
-  phase_plot <- ggplot(Smax, aes(x = I, y = S)) +
+  phase_plot <- ggplot(Smax, aes(x = S, y = I)) +
     geom_path(color = '#f00745', size = 1) +
-    geom_path(data = Smin, aes(x = I, y = S), color = '#0e9e97', linewidth = 1, linetype = 'longdash') +
-    geom_path(data = normal, aes(x = I, y = S)) +
-    labs(x = 'Infected', y = 'Susceptible') +
+    geom_path(data = Smin, aes(x = S, y = I), color = '#0e9e97', linewidth = 1, linetype = 'longdash') +
+    geom_path(data = normal, aes(x = S, y = I)) +
+    labs(x = 'Susceptible', y = 'Infected') +
     theme_bw()
   
   # Combine the main plot with the phase plot as an inset
+  
   combined_plot <- ggdraw() +
     draw_plot(main_plot) +
-    draw_plot(phase_plot, x = 0.68, y = 0.55, width = 0.3, height = 0.35)
+    draw_plot(phase_plot, x = drawplotx, y = 0.55, width = 0.3, height = 0.35)
 }
 
 # WBD
@@ -43,9 +46,9 @@ w_n <- readRDS('../data/sim_results/normal_dry.RData')
 w_ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_dry.RData')
 w_ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_dry.RData')
 
-wbd_plot <- plot_ts_with_pp(normal = w_n$normal_dry_2
-                            , Smax = w_ee_Smax$dry_2_70I_7D
-                            , Smin = w_ee_Smin$dry_2_70I_7D
+wbd_plot <- plot_ts_with_pp(normal = as.data.frame(w_n)
+                            , Smax = w_ee_Smax$dry_100I_7D
+                            , Smin = w_ee_Smin$dry_100I_7D
                             , yMax = 0.25
                             , mainTitle = 'A. Water-borne disease'
                             , addLegend = TRUE
@@ -57,10 +60,10 @@ n <- readRDS('../data/sim_results/normal_warm.RData')
 ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_warm.RData')
 ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_warm.RData')
 
-vbd_plot <- plot_ts_with_pp(normal = n$normal_warm_3
-                , Smax = ee_Smax$warm_3_15I_20D
-                , Smin = ee_Smin$warm_3_15I_20D
-                , yMax = 0.9
+vbd_plot <- plot_ts_with_pp(normal = as.data.frame(n)
+                , Smax = ee_Smax$warm_15I_20D
+                , Smin = ee_Smin$warm_15I_20D
+                , yMax = 1
                 , mainTitle = 'B. Vector-borne disease'
                 )
 

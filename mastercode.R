@@ -30,16 +30,9 @@ source('simulate_betas_ee.R')
 source('plot_disease_time_series.R')
 
 # Step 10: calculate summary metrics for model runs (i.e., beta time series)
-# ran this step on the cluster, but don't need to
 source('analyze_simulations.R')
 
-# Step 13: conduct power analysis to statistically compare normal and extreme event time series
-source('power_analyses.R')
-
-# Step 14: combine metrics and perform t-test to statistically compare normal and extreme event time series
-source('combine_metrics.R')
-
-# Step 15: create heatmaps of power analyses & t-tests
+# Step 11: create heatmaps of power analyses & t-tests
 source('heatmaps.R')
 
 # Step 16: create plots relating extreme events to past outbreaks

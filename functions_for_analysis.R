@@ -11,7 +11,7 @@ compute_stats <- function(df, ht) {
   peaks <- data.frame(findpeaks(df$I, minpeakheight = ht, minpeakdistance = 10))
   
   if(nrow(peaks) == 0){
-    summary_stats <- data.frame(peak_timing = 0, max_incidence = 0, cumulative_proportion = 0, duration = 0, peakiness = 0)
+    summary_stats <- data.frame(peak_timing = 0, cumulative_proportion = 0, outbreak_duration = 0)
   } else {
     
     colnames(peaks) <- c('Peak_height', 'Peak_timing', 'Start_outbreak', 'End_outbreak')
@@ -25,14 +25,10 @@ compute_stats <- function(df, ht) {
     summary_stats <- data.frame(
       # Peak timing
       peak_timing = peaks$Peak_timing[idx]    
-      # Max incidence
-      , max_incidence = peaks$Peak_height[idx]
       # Final size
       , cumulative_proportion = trapz(df$I[peaks$Start_outbreak[idx]:peaks$End_outbreak[idx]])
       # Duration largest outbreak
-      , duration = peaks$End_outbreak[idx] - peaks$Start_outbreak[idx]
-      # Number outbreaks
-      , peakiness = nrow(peaks)
+      , outbreak_duration = peaks$End_outbreak[idx] - peaks$Start_outbreak[idx]
     )
     
   }
@@ -40,7 +36,7 @@ compute_stats <- function(df, ht) {
   return(summary_stats)
 }
 
-process_sir_output <- function(datalist, model_type, explabel){
+process_sir_output <- function(datalist, model_type){
   if (model_type == 'wbd') {
     ht_temp = 0.02
   } else {
@@ -51,10 +47,30 @@ process_sir_output <- function(datalist, model_type, explabel){
   results <- Map(compute_stats, df = dfshort, ht = ht_temp)
   
   # flatten
-  results_flattened <- bind_rows(lapply(results, bind_rows, .id = "Dataset"), .id = "List")
-  
-  # add label
-  results_flattened$experiment <- explabel
+  results_flattened <- bind_rows(lapply(results, bind_rows), .id = "List")
   
   return(results_flattened)
+}
+
+# long to wide
+spread_by_metric <- function(df, metric){
+  ndf2 <- df[c('List', 'regime', 'suscept', metric)] %>%
+    spread(key = List, value = metric)
+  return(ndf2)
+}
+
+# calculate differences by row
+calc_diff <- function(df){
+  perturbationColumns <- colnames(df)[!grepl(c('List|regime|suscept|control'), colnames(df))]
+  df[perturbationColumns] <- df[perturbationColumns]-df$control
+  return(df)
+}
+
+# go from wide to long again for plotting purposes
+gather_by_metric <- function(df, metric){
+  dfx <- df %>%
+    select(-control) %>%
+    gather(key = ee, value = diff, -c('regime', 'suscept'))
+  colnames(dfx)[ncol(dfx)] <- paste0(metric, '_diff')
+  return(dfx)
 }

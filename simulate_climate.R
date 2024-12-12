@@ -6,7 +6,7 @@ source('time_spans.R')
 savedir <- '../data/sim_climate/'
 
 sim_climate_from_data <- function(df, regimeType){
-  s <- simulate_seasonal_climate(xmin = mean(df$Min_Month_Value), xmax = mean(df$Max_Month_Value), years = Yrs)
+  s <- simulate_seasonal_climate(xmin = median(df$Min_Month_Value), xmax = median(df$Max_Month_Value), years = Yrs)
   saveRDS(s, paste0(savedir, 'normal_', regimeType, '_clim.RData'))
   return(s)
 }

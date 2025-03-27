@@ -13,9 +13,15 @@ x <- read.csv('../data/extreme_events.csv')
 x$Percentile[x$Extreme_climate_event == 'Drought'] <- 100 - x$Percentile[x$Extreme_climate_event == 'Drought']
 x$Extreme_climate_event[x$Extreme_climate_event == 'Cyclone/Hurricane/Typhoon'] <- 'Cyclone/\nHurricane/Typhoon'
 
+# average percentiles across studies
+x2 <- x %>%
+  group_by(ID, City, lon, lat, Disease, Climate_variable, Outbreak_risk, Extreme_climate_event, Koppen_Group, Koppen_Subgroup, Agreement, Evidence) %>%
+  summarise(Percentile = median(Percentile)) %>%
+  as.data.frame()
+
 # Plotting extreme events: intensity vs group categories
 # Plotting function
-plotFun <- function(xName, colorName, custom_colors, colorLegendName, titleName){
+plotFun <- function(x, xName, colorName, custom_colors, colorLegendName, titleName){
   p <- ggplot(x, aes(x = xName, y = Percentile, color = colorName)) +
     geom_hline(yintercept = c(10, 90), linetype = 'dashed', color = 'grey') +
     geom_boxplot() +
@@ -33,12 +39,12 @@ plotFun <- function(xName, colorName, custom_colors, colorLegendName, titleName)
 custom_colors_1 <- c('Mixed' = '#d4ac0d', 'No' = 'black', 'Yes' = '#0c9e81')
 
 # plot
-koppen_plot <- plotFun(xName = x$Koppen_Subgroup, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Köppen climate regime') +
+koppen_plot <- plotFun(x = x2, xName = x2$Koppen_Subgroup, colorName = x2$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Köppen climate regime') +
   facet_grid( ~ Koppen_Group, scales = 'free_x', space = 'free')
 
-disease_plot <- plotFun(xName = x$Disease, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Disease type') 
+disease_plot <- plotFun(x = x2, xName = x2$Disease, colorName = x2$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Disease type') 
 
-climate_plot <- plotFun(xName = x$Extreme_climate_event, colorName = x$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Climate event') 
+climate_plot <- plotFun(x = x2, xName = x2$Extreme_climate_event, colorName = x2$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Climate event') 
 
 # combine plots
 y_axis_label <- ggplot() +

@@ -66,30 +66,7 @@ for(i in 1:nrow(csid2)){
   }
 }
   
-# average percentiles across studies
-# x <- csid2 %>%
-#   group_by(ID, City, lon, lat, Disease, Climate_variable, Outbreak_risk, Extreme_climate_event, Koppen_Name, Agreement, Evidence) %>%
-#   summarise(Percentile = median(Percentile)
-#             , Clim = median(Climate_median)
-#             ) %>%
-#   as.data.frame()
-# 
-# # round and average by clim and then plot?
-# xx <- subset(x, Climate_variable == 'Rainfall' & Disease == 'Cholera')
-# plot(xx$Clim, xx$Percentile, pch = 16, col = as.factor(xx$Outbreak_risk))
-# 
-# xx <- subset(csid2, Climate_variable == 'Temperature')
-# plot(xx$Climate_median, xx$Percentile, pch = 16, col = as.factor(xx$Disease))
-# 
-# x1 <- x %>%
-#   mutate(Climate2 = round(Clim, 1)) %>%
-#   filter(Climate_variable == 'Rainfall') %>%
-#   group_by(Climate2) %>%
-#   mutate(mid = quantile(Percentile, 0.5)) %>% as.data.frame()
-#             , lwr = quantile(Percentile, 0.25)
-#             , upr = quantile(Percentile), 0.75)
-# 
-# plot(x1$Climate2, x1$mid, col = as.factor(xx$Outbreak_risk))
+# rename
 x <- csid2
 
 # format text for plotting

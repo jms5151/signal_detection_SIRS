@@ -31,6 +31,7 @@ for(i in 1:nrow(csid2)){
   fileID <- which(grepl(paste0('ID', ee_id, '_'), clim_files))
   clim_data <- read.csv(paste0(clim_files_path, clim_files[fileID]))
   clim_data$Date <- as.Date(clim_data$time)
+  clim_data <- subset(clim_data, Date <= '2020-12-31')
   if(csid2$Climate_variable[i] == 'Rainfall'){
     clim_data$YM <- format(clim_data$Date, '%Y-%m')
     clim_summary <- clim_data %>%

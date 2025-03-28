@@ -15,51 +15,59 @@ x$Extreme_climate_event[x$Extreme_climate_event == 'Cyclone/Hurricane/Typhoon'] 
 
 # average percentiles across studies
 x2 <- x %>%
-  group_by(ID, City, lon, lat, Disease, Climate_variable, Outbreak_risk, Extreme_climate_event, Koppen_Group, Koppen_Subgroup, Agreement, Evidence) %>%
-  summarise(Percentile = median(Percentile)) %>%
+  filter(!is.na(Agreement)) %>%
   as.data.frame()
+
+x2$Agreement <- factor(x2$Agreement, levels = c('High', 'Medium', 'Low'))
 
 # Plotting extreme events: intensity vs group categories
 # Plotting function
 plotFun <- function(x, xName, colorName, custom_colors, colorLegendName, titleName){
-  p <- ggplot(x, aes(x = xName, y = Percentile, color = colorName)) +
+  p <- ggplot(x, aes(x = xName, y = Percentile)) +
     geom_hline(yintercept = c(10, 90), linetype = 'dashed', color = 'grey') +
-    geom_boxplot() +
-    geom_jitter(width = 0.2, size = 3) +
-    scale_color_manual(values = custom_colors) +
+    geom_boxplot(color = "black", fill = NA) +
+    geom_jitter(aes(fill = colorName), 
+                width = 0.2, 
+                size = 3, 
+                shape = 21,     # allows fill + outline
+                color = "black",  # black outline
+                stroke = 0.5) +   # outline thickness
+    scale_fill_manual(values = custom_colors) +  # apply your custom colors here
     theme_bw() +
     labs(title = titleName,
          x = '',
          y = '',
-         color = colorLegendName)
+         fill = colorLegendName)  # use 'fill' for the legend title
+  
   return(p)
 }
 
 # set custom colors
-custom_colors_1 <- c('Mixed' = '#d4ac0d', 'No' = 'black', 'Yes' = '#0c9e81')
+custom_colors_1 <- c('High' = '#d4ac0d', 'Medium' = 'purple', 'Low' = '#0c9e81')#, 'Insufficient sample size' = 'grey')
 
 # plot
-koppen_plot <- plotFun(x = x2, xName = x2$Koppen_Subgroup, colorName = x2$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Köppen climate regime') +
+koppen_plot <- plotFun(x = x2, xName = x2$Koppen_Subgroup, colorName = x2$Agreement, custom_colors = custom_colors_1, colorLegendName = 'Agreement among studies\non climate-outbreak link', titleName = 'Köppen climate regime') +
   facet_grid( ~ Koppen_Group, scales = 'free_x', space = 'free')
 
-disease_plot <- plotFun(x = x2, xName = x2$Disease, colorName = x2$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Disease type') 
+disease_plot <- plotFun(x = x2, xName = x2$Disease, colorName = x2$Agreement, custom_colors = custom_colors_1, colorLegendName = 'Agreement among studies\non climate-outbreak link', titleName = 'Disease type') 
 
-climate_plot <- plotFun(x = x2, xName = x2$Extreme_climate_event, colorName = x2$Outbreak_risk, custom_colors = custom_colors_1, colorLegendName = 'Outbreak risk', titleName = 'Climate event') 
+climate_plot <- plotFun(x = x2, xName = x2$Extreme_climate_event, colorName = x2$Agreement, custom_colors = custom_colors_1, colorLegendName = 'Agreement among studies\non climate-outbreak link', titleName = 'Climate event') 
 
 # combine plots
 y_axis_label <- ggplot() +
-  geom_text(aes(0, 0, label = 'Extreme event (percentile)'), angle = 90, size = 4, hjust = 0.5) +
+  geom_text(aes(0, 0, label = 'Extreme event (percentile)'), angle = 90, size = 4, hjust = 0.5, vjust = 0.5) +
   theme_void()  # Remove all background and axis elements
 
 combined_plot <- (y_axis_label | koppen_plot / (disease_plot | climate_plot)) + 
   plot_layout(widths = c(0.07, 1), guides = 'collect') +
-  plot_annotation('Extreme event driven outbreaks, cateogrized by:')
+  plot_annotation('Extreme event driven outbreaks, cateogrized by:') &
+  theme(legend.position = "bottom")
 
 # Display the combined plot
 combined_plot
 
 # save
-ggsave(filename = '../figures/csid_comparison.pdf', plot = combined_plot, width = 12, height = 6.5)
+ggsave(filename = '../figures/csid_comparison.pdf', plot = combined_plot, width = 11, height = 6.5)
 
 # Attributable fraction for cholera
 source('far_and_rr_functions.R')
@@ -173,13 +181,13 @@ threshold_cols <- c('Dry' = 'brown', 'Moderate' = 'lightblue', 'Wet' = 'blue')
 # ribbon in supplemental
 af_obs_plot <- ggplot() +
   # Theoretical uncertainty ribbon
-  geom_ribbon(data = af_theory_df,
-              aes(x = raindev, ymin = AF_lower, ymax = AF_upper, fill = threshold),
-              alpha = 0.3) +
+  # geom_ribbon(data = af_theory_df,
+  #             aes(x = raindev, ymin = AF_lower, ymax = AF_upper, fill = threshold),
+  #             alpha = 0.3) +
   # Theoretical mean line
   geom_line(data = af_theory_df,
             aes(x = raindev, y = AF_mean, color = threshold),
-            size = 1) +
+            linewidth = 1) +
   # Observational error bars
   geom_errorbar(data = xrain,
                 aes(x = raindev, ymin = AF_lower, ymax = AF_upper, color = climate_regime),

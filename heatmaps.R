@@ -142,3 +142,4 @@ triPlot <- ggplot(triangle_data, aes(x = x, y = y)) +
 combined_plot <- (wbd_plt / vbd_plt) | (triPlot)
 combined_plot
 ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot1.pdf', plot = combined_plot, width = 11, height = 6.5)
+ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smin.pdf', plot = combined_plot, width = 11, height = 6.5)

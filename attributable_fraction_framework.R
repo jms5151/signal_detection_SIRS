@@ -47,7 +47,7 @@ threshold_data <- tibble(
       'Linear (decreasing)', 'Michaelis Menten', 'Modified Briere', 'Quadratic'), 
     each = 3
   ),
-  threshold = c(3, 5, 9, 8, 13, 18, rep(c(5, 9, 15), 2), 3, 7, 12, 6, 10, 16, 3, 7, 18),
+  threshold = c(3, 5, 9, 18, 13, 8, 15, 9, 5, 5, 9, 15, 12, 7, 3, 16, 10, 6, 3, 18, 7),
   threshold_level = rep(c('closest', 'mid', 'farthest'), 7)
 )
 
@@ -103,7 +103,9 @@ plot_functions <- function(df, thresholds) {
     facet_wrap(~func, nrow = 1) +
     labs(title = 'Transmission function', x = 'Climate variable', y = 'Transmission rate') +
     theme_bw(base_size = 14) +
-    scale_color_manual(values = value_colors) +
+    scale_color_manual(values = value_colors,
+                       name = 'Climate regime suitability',
+                       labels = c('closest' = 'High', 'mid' = 'Moderate', 'farthest' = 'Low')) +
     guides(color = 'none')
 }
 
@@ -134,7 +136,9 @@ plot_susceptibility <- function(df) {
     geom_hline(yintercept = 1, size = 1, col = 'grey') +
     theme_bw(base_size = 14) +
     facet_wrap(~func, nrow = 1) +
-    scale_color_manual(values = value_colors) +
+    scale_color_manual(values = value_colors,
+                       name = 'Climate regime suitability',
+                       labels = c('closest' = 'High', 'mid' = 'Moderate', 'farthest' = 'Low')) +
     labs(
       title = 'Susceptibility impacts', 
       x = 'Extreme event caused climate deviation', 
@@ -161,7 +165,7 @@ mp_all <- create_multiplot(df_all, threshold_data, df, long_data_s)
 ggsave('../figures/functional_forms/multiplot_all.pdf', plot = mp_all, width = 12, height = 7)
 
 # Define the main functions to subset data
-main_functions <- c('Exponential Growth', 'Linear (increasing)', 'Modified Briere', 'Quadratic')
+main_functions <- c('Linear (increasing)', 'Modified Briere', 'Quadratic')
 
 # Subset data for selected functions
 df_sub <- df_all %>% filter(func %in% main_functions)

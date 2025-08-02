@@ -151,6 +151,8 @@ bvals <- data.frame(
 
 # Subset cholera rows with non-missing rainfall
 xrain <- subset(x, !is.na(Climate_value) & Disease == 'Cholera')
+# xrain <- subset(x, !is.na(Climate_value))
+# xrain <- subset(xrain, Disease == 'Cholera'| Disease == 'Diarrhea')
 
 # Rain sequence
 maxRain <- round(max(xrain$Climate_value))

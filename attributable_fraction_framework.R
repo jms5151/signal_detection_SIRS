@@ -69,7 +69,6 @@ calculate_attribution <- function(df_all, threshold_data, s_low, s_high) {
         mutate(
           FAR = calc_FAR(p0 = beta_exceed, p1 = beta),
           RR = calc_RR(p0 = beta_exceed, p1 = beta),
-          AF = calc_AF(FAR = FAR, RR = RR),
           Low = Re_calc(beta = beta, S = s_low),
           High = Re_calc(beta = beta, S = s_high)
         )
@@ -110,14 +109,14 @@ plot_functions <- function(df, thresholds) {
 }
 
 plot_attribution <- function(df) {
-  ggplot(df, aes(x = climate_delta, y = AF, color = threshold_level)) +
+  ggplot(df, aes(x = climate_delta, y = FAR, color = threshold_level)) +
     geom_line(linewidth = 1.1) +
     theme_bw(base_size = 14) +
     facet_wrap(~func, nrow = 1) +
     labs(
       title = 'Climate attribution', 
       x = 'Extreme event caused climate deviation', 
-      y = 'Attributable fraction'
+      y = 'FAR'
     ) +
     scale_color_manual(
       values = value_colors,

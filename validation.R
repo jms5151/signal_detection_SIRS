@@ -154,6 +154,7 @@ x2 <- left_join(boot_summary, rain_summary, by = 'id') %>%
 
 # Calculate theoretical FAR
 source('transmission_functions.R')
+source('far_and_rr_functions.R')
 
 dry_regime <- median(x2$rain_90th[x2$rain_cat=='Dry'])
 moderate_regime <- median(x2$rain_90th[x2$rain_cat=='Moderate'])
@@ -189,7 +190,7 @@ far_cholera_plot <- ggplot(x2, aes(x = rain_deviation, y = FAR_median, color = r
   geom_errorbar(aes(ymin = FAR_lower, ymax = FAR_upper), width = 0.05) +
   geom_line(data = line_df_long, aes(x = x, y = FAR_fit, color = rain_cat), size = 1) +
   labs(
-    x = 'Relative Ratio (total rainfall / exceedance threshold)',
+    x = 'Rainfall deviation (total rainfall / exceedance threshold)',
     y = 'FAR for prior cholera outbreaks',
     # title = "Beta FAR vs Rainfall Deviation",
     color = 'Rainfall Regime'

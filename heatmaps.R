@@ -5,10 +5,10 @@ library(patchwork)
 suscept_level <- 'S_max'  # or 'S_min'
 
 symbol_specs <- tibble::tibble(
-  regime = c('Dry', 'Wet', 'Warm'),
-  duration = c(5, 5, 15),
-  intensity = c(60, 70, 5),
-  shape = c('circle', 'square', 'triangle')
+  regime = c('Dry', 'Moderate', 'Hot', 'Warm'),
+  duration = c(4, 7, 5, 18),
+  intensity = c(20, 90, 6, 2),
+  shape = c('circle', 'square', 'diamond', 'triangle')
 )
 
 # --- DATA TRANSFORMATION ---
@@ -17,6 +17,7 @@ x$regime <- factor(x$regime, levels = c('Dry', 'Moderate', 'Wet', 'Temperate', '
 
 # Transform and color mapping
 transformed_data <- x %>%
+  filter(suscept == suscept_level) %>%
   mutate(
     peak_timing_log = log(peak_timing_diff - min(peak_timing_diff) + 0.01),
     cumulative_prop_squared = (cumulative_proportion_diff - min(cumulative_proportion_diff) + 0.01)^2,
@@ -59,9 +60,9 @@ plt_regimes <- function(df, xLabel = '', yLabel = '', titleLabel = '') {
 
 # --- SUBSET DATA ---
 wbd_data <- transformed_data %>%
-  filter(regime %in% c('Dry', 'Moderate', 'Wet'), suscept == !!suscept_level)
+  filter(regime %in% c('Dry', 'Moderate', 'Wet'), suscept == !! suscept_level)
 vbd_data <- transformed_data %>%
-  filter(regime %in% c('Temperate', 'Warm', 'Hot'), suscept == !!suscept_level)
+  filter(regime %in% c('Temperate', 'Warm', 'Hot'), suscept == !! suscept_level)
 
 # --- ADD SYMBOLS ---
 add_symbols <- function(data, symbol_specs) {
@@ -131,3 +132,4 @@ combined_plot
 ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smax.pdf', plot = combined_plot, width = 11, height = 6.5)
 ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smax.png', dpi= 500, plot = combined_plot, width = 11, height = 6.5)
 # ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smin.pdf', plot = combined_plot, width = 11, height = 6.5)
+

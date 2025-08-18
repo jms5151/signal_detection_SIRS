@@ -1,7 +1,8 @@
 # Parameter values
-mu = 7 * 10e-04 # birth/death rate
+mu = 3.65e-5 # birth/death rate
 
 # Lambrechts model
+# ** Double check this is not 1/15 in the original paper(s)
 vbd.gamma = 1 / 15  # recovery rate / inverse generation time
 
 # Eisenberg model

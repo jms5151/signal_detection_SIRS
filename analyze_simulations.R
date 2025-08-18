@@ -56,7 +56,6 @@ vbd_group <- normalized_df[grepl('temperate|warm|hot', normalized_df$regime), ]
 
 metricNames <- c('peak_timing', 'cumulative_proportion', 'outbreak_duration')
 
-
 spread_by_metric <- function(df, metric){
   ndf2 <- df[c('List', 'regime', 'suscept', metric)] %>%
     spread(key = List, value = metric)
@@ -71,7 +70,6 @@ calc_perc_change <- function(df, annualized=F){
   } else {
     df[perturbationColumns] <- (df[perturbationColumns]-df$control)/df$control
   }
-  
   return(df)
 }
 
@@ -96,9 +94,10 @@ process_group <- function(dfx){
 }
 
 # process and combine
-wbd_diff <- process_group(df = wbd_group)
+wbd_diff <- process_group(dfx = wbd_group)
 vbd_diff <- process_group(df = vbd_group)
 longCombined <- rbind(wbd_diff, vbd_diff)
+longCombined[is.na(longCombined)] <- 0
 
 # format columns
 longCombined$regime <- str_to_sentence(longCombined$regime)

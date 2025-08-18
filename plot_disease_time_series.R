@@ -22,8 +22,8 @@ plot_ts_with_pp <- function(normal, Smax, Smin, yMax = 1, mainTitle = '', addLeg
             )
     drawplotx <- 0.68
   } else {
-    main_plot <- main_plot + theme(legend.position = 'non')
-    drawplotx <- 0.08
+    main_plot <- main_plot + theme(legend.position = 'none')
+    drawplotx <- 0.68
   }
 
   # Create the phase plot using ggplot2
@@ -49,21 +49,21 @@ w_ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_dry.RData')
 wbd_plot <- plot_ts_with_pp(normal = as.data.frame(w_n)
                             , Smax = w_ee_Smax$dry_100I_7D
                             , Smin = w_ee_Smin$dry_100I_7D
-                            , yMax = 0.25
+                            , yMax = 0.025
                             , mainTitle = 'A. Water-borne disease'
                             , addLegend = TRUE
                             ) 
 
 
 # VBD
-n <- readRDS('../data/sim_results/normal_warm.RData')
-ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_warm.RData')
-ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_warm.RData')
+n <- readRDS('../data/sim_results/normal_temperate.RData')
+ee_Smax <- readRDS('../data/sim_results_ee/S_max_t_temperate.RData')
+ee_Smin <- readRDS('../data/sim_results_ee/S_min_t_temperate.RData')
 
 vbd_plot <- plot_ts_with_pp(normal = as.data.frame(n)
-                , Smax = ee_Smax$warm_15I_20D
-                , Smin = ee_Smin$warm_15I_20D
-                , yMax = 1
+                , Smax = ee_Smax$temperate_5I_20D
+                , Smin = ee_Smin$temperate_5I_20D
+                , yMax = 0.85
                 , mainTitle = 'B. Vector-borne disease'
                 )
 

@@ -4,8 +4,8 @@
 source('attributable_fraction_framework.R')
 
 # Step 2: create 'normal' climate time series based on thresholds above
-# This code requires functions from 'functions_to_simulate_climate.R' and 'time_spans.R' &
-# running 'ancillary_climate_data.R'
+# This code requires functions from 'functions_to_simulate_climate.R' and 'time_spans.R'
+# Sin function values informed by 'ancillary_climate_data.R'
 source('simulate_climate.R')
 
 # Step 3: create times series of betas from climate time series

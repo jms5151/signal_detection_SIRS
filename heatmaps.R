@@ -5,19 +5,20 @@ library(patchwork)
 source('functions_for_heatmaps.R')
 
 # prepare data ------------
+# load data
+x <- readRDS('../data/sim_summaries/long_summary.RData')
+
 # set susceptibility level
 suscept_level <- 'S_max'  
 
 # set symbols for regimes
 symbol_specs <- tibble::tibble(
-  regime = c('Dry', 'Moderate', 'Temperate', 'Warm'),
-  intensity = c(20, 60, 7, 2),
-  duration = c(4, 3, 6, 18),
+  regime = c('Dry', 'Wet', 'Temperate', 'Warm'),
+  intensity = c(80, 50, 7, 2),
+  duration = c(5, 4, 5, 18),
   shape = c('circle', 'square', 'diamond', 'triangle')
 )
 
-# load data
-x <- readRDS('../data/sim_summaries/long_summary.RData')
 
 # Transform and subset data
 wbd_data <- transform_data(x, c('Dry', 'Moderate', 'Wet'), suscept_level)
@@ -81,7 +82,7 @@ triPlot <- ggplot(grid, aes(x = x, y = y)) +
 combined_plot <- (wbd_plt / vbd_plt) | triPlot
 combined_plot
 
+# save
 ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smax.pdf', plot = combined_plot, width = 11, height = 6.5)
 ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smax.png', dpi= 500, plot = combined_plot, width = 11, height = 6.5)
-# ggsave(filename = '../figures/heatmaps_regimes/fingerprint_heatmap_plot_Smin.pdf', plot = combined_plot, width = 11, height = 6.5)
 

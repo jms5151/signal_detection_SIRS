@@ -1,81 +1,38 @@
 library(tidyverse)
 library(patchwork)
 
-# --- USER SETTINGS ---
-suscept_level <- 'S_max'  # or 'S_min'
+# source functions
+source('functions_for_heatmaps.R')
 
+# prepare data ------------
+# set susceptibility level
+suscept_level <- 'S_max'  
+
+# set symbols for regimes
 symbol_specs <- tibble::tibble(
-  regime = c('Dry', 'Moderate', 'Hot', 'Warm'),
-  duration = c(4, 7, 5, 18),
-  intensity = c(20, 90, 6, 2),
+  regime = c('Dry', 'Moderate', 'Temperate', 'Warm'),
+  intensity = c(20, 60, 7, 2),
+  duration = c(4, 3, 6, 18),
   shape = c('circle', 'square', 'diamond', 'triangle')
 )
 
-# --- DATA TRANSFORMATION ---
+# load data
 x <- readRDS('../data/sim_summaries/long_summary.RData')
-x$regime <- factor(x$regime, levels = c('Dry', 'Moderate', 'Wet', 'Temperate', 'Warm', 'Hot'))
 
-# Transform and color mapping
-transformed_data <- x %>%
-  filter(suscept == suscept_level) %>%
-  mutate(
-    peak_timing_log = log(peak_timing_diff - min(peak_timing_diff) + 0.01),
-    cumulative_prop_squared = (cumulative_proportion_diff - min(cumulative_proportion_diff) + 0.01)^2,
-    outbreak_duration_sqrt = sqrt(outbreak_duration_diff - min(outbreak_duration_diff) + 0.01),
-    
-    peak_timing_z = scale(peak_timing_log)[, 1],
-    cumulative_prop_z = scale(cumulative_prop_squared)[, 1],
-    outbreak_duration_z = scale(outbreak_duration_sqrt)[, 1],
-    
-    peak_timing_pos = abs(peak_timing_z),
-    cumulative_prop_pos = abs(cumulative_prop_z),
-    outbreak_duration_pos = abs(outbreak_duration_z),
-    
-    total = peak_timing_pos + cumulative_prop_pos + outbreak_duration_pos + 1e-6,
-    
-    G = peak_timing_pos / total,
-    B = cumulative_prop_pos / total,
-    R = outbreak_duration_pos / total,
-    color = rgb(R, G, B),
-    
-    R_rounded = round(R, 3),
-    G_rounded = round(G, 3),
-    B_rounded = round(B, 3)
-  )
+# Transform and subset data
+wbd_data <- transform_data(x, c('Dry', 'Moderate', 'Wet'), suscept_level)
+vbd_data <- transform_data(x, c('Temperate', 'Warm', 'Hot'), suscept_level)
 
-# --- PLOTTING FUNCTION ---
-plt_regimes <- function(df, xLabel = '', yLabel = '', titleLabel = '') {
-  ggplot(df, aes(x = intensity, y = duration)) + 
-    geom_tile(aes(fill = color), show.legend = FALSE) +
-    geom_point(data = df %>% filter(!is.na(shape)),
-               mapping = aes(x = intensity, y = duration, shape = shape),
-               size = 3, color = 'white', show.legend = FALSE) +
-    scale_shape_manual(values = c(circle = 1, square = 0, triangle = 2, diamond = 5)) +
-    scale_fill_identity() +
-    facet_grid(~ regime, scales = 'free') +
-    labs(x = xLabel, y = yLabel, title = titleLabel) +
-    theme_bw() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-}
-
-# --- SUBSET DATA ---
-wbd_data <- transformed_data %>%
-  filter(regime %in% c('Dry', 'Moderate', 'Wet'), suscept == !! suscept_level)
-vbd_data <- transformed_data %>%
-  filter(regime %in% c('Temperate', 'Warm', 'Hot'), suscept == !! suscept_level)
-
-# --- ADD SYMBOLS ---
-add_symbols <- function(data, symbol_specs) {
-  left_join(data, symbol_specs, by = c('regime', 'duration', 'intensity'))
-}
+# Add symbols
 wbd_data <- add_symbols(wbd_data, symbol_specs)
 vbd_data <- add_symbols(vbd_data, symbol_specs)
+transformed_data <- rbind(wbd_data, vbd_data)
 
-# --- PLOT HEATMAPS ---
-wbd_plt <- plt_regimes(wbd_data, 'Heavy rainfall intensity (mm above threshold)', 'Heavy rainfall duration (days)', 'Water-borne disease')
-vbd_plt <- plt_regimes(vbd_data, 'Heatwave intensity (degrees Celsius above threshold)', 'Heatwave duration (days)', 'Vector-borne disease')
+# Heatmaps ------------
+wbd_plt <- plt_regimes(wbd_data, 'Heavy rainfall intensity (mm above threshold)', 'Heavy rainfall duration (days)', 'Water-borne disease',  c('Dry', 'Moderate', 'Wet'))
+vbd_plt <- plt_regimes(vbd_data, 'Heatwave intensity (degrees Celsius above threshold)', 'Heatwave duration (days)', 'Vector-borne disease', c('Temperate', 'Warm', 'Hot'))
 
-# --- TRIANGLE LEGEND ---
+# Triangle legend ------------
 rgb_lookup <- transformed_data %>% distinct(R, G, B, color)
 
 grid <- expand.grid(R = seq(0, 1, by = 0.01), G = seq(0, 1, by = 0.01)) %>%
@@ -90,16 +47,11 @@ get_nearest_color <- function(R, G, B, data_rgb) {
 
 grid$color <- purrr::pmap_chr(grid[, c('R', 'G', 'B')], get_nearest_color, data_rgb = rgb_lookup)
 
-# --- SYMBOL POINTS IN LEGEND ---
+# Add symbols
 symbol_rows <- transformed_data %>%
-  filter(suscept == !!suscept_level) %>%
-  inner_join(symbol_specs, by = c('regime', 'duration', 'intensity')) %>%
+  filter(!is.na(shape)) %>%
+  # inner_join(symbol_specs, by = c('regime', 'duration', 'intensity')) %>%
   distinct(R, G, B, shape)  # Only keep unique color/shape combos
-
-get_nearest_xy <- function(r, g, b, triangle_df) {
-  diffs <- (triangle_df$R - r)^2 + (triangle_df$G - g)^2 + (triangle_df$B - b)^2
-  triangle_df[which.min(diffs), c('x', 'y')]
-}
 
 symbol_coords <- purrr::pmap_dfr(
   list(symbol_rows$R, symbol_rows$G, symbol_rows$B),
@@ -108,7 +60,7 @@ symbol_coords <- purrr::pmap_dfr(
 
 symbol_points <- bind_cols(symbol_coords, symbol_rows)
 
-# --- FINAL TRIANGLE PLOT ---
+# plot
 triPlot <- ggplot(grid, aes(x = x, y = y)) +
   geom_tile(aes(fill = color), width = 0.01, height = 0.01) +
   scale_fill_identity() +
@@ -125,7 +77,7 @@ triPlot <- ggplot(grid, aes(x = x, y = y)) +
   geom_point(data = symbol_points, aes(x = x, y = y, shape = shape), size = 3, color = 'white', show.legend = FALSE) +
   scale_shape_manual(values = c(circle = 1, square = 0, triangle = 2, diamond = 5))
 
-# --- COMBINED PLOT ---
+# Combine heatmap and triangle legend
 combined_plot <- (wbd_plt / vbd_plt) | triPlot
 combined_plot
 
